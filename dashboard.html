@@ -177,7 +177,7 @@
             document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'User';
             
             try {
-                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors' });
+                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors', credentials: 'include' });
                 const data = await res.json();
                 if (!data.authenticated) {
                     window.location.href = 'login.html';
@@ -194,7 +194,7 @@
         // Load statistics
         async function loadStats() {
             try {
-                const res = await fetch(`${backendUrl}/api/stats`, { mode: 'cors' });
+                const res = await fetch(`${backendUrl}/api/stats`, { mode: 'cors', credentials: 'include' });
                 const data = await res.json();
                 if (data.success) {
                     document.getElementById('totalViolations').textContent = data.total_violations;
@@ -210,7 +210,7 @@
         // Load recent violations
         async function loadRecentViolations() {
             try {
-                const res = await fetch(`${backendUrl}/violations/api/list?per_page=5`, { mode: 'cors' });
+                const res = await fetch(`${backendUrl}/violations/api/list?per_page=5`, { mode: 'cors', credentials: 'include' });
                 const data = await res.json();
                 
                 if (data.success) {
@@ -252,7 +252,7 @@
         // Handle Logout
         async function handleLogout() {
             try {
-                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors' });
+                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
             } catch (err) {
                 console.error('Logout request failed:', err);
             }

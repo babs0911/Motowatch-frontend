@@ -123,7 +123,7 @@
             document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'User';
             
             try {
-                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors' });
+                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors', credentials: 'include' });
                 const data = await res.json();
                 if (!data.authenticated) {
                     window.location.href = 'login.html';
@@ -223,7 +223,7 @@
         // Handle Logout
         async function handleLogout() {
             try {
-                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors' });
+                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
             } catch (err) {
                 console.error(err);
             }

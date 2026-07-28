@@ -209,7 +209,8 @@
             try {
                 const res = await fetch(`${backendUrl}/auth/api/session`, { 
                     headers: { 'Accept': 'application/json' },
-                    mode: 'cors'
+                    mode: 'cors',
+                    credentials: 'include'
                 });
                 const data = await res.json();
                 if (data.authenticated) {
@@ -259,7 +260,8 @@
                         'Accept': 'application/json'
                     },
                     body: JSON.stringify({ username, password }),
-                    mode: 'cors'
+                    mode: 'cors',
+                    credentials: 'include'
                 });
 
                 const data = await res.json();

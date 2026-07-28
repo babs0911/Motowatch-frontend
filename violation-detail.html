@@ -253,7 +253,7 @@
             }
 
             try {
-                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors' });
+                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors', credentials: 'include' });
                 const data = await res.json();
                 if (!data.authenticated) {
                     window.location.href = 'login.html';
@@ -269,7 +269,7 @@
         // Fetch & Render Details
         async function loadViolationDetails() {
             try {
-                const res = await fetch(`${backendUrl}/violations/api/${violationId}`, { mode: 'cors' });
+                const res = await fetch(`${backendUrl}/violations/api/${violationId}`, { mode: 'cors', credentials: 'include' });
                 const data = await res.json();
 
                 if (data.success) {
@@ -453,7 +453,8 @@
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(bodyData),
-                    mode: 'cors'
+                    mode: 'cors',
+                    credentials: 'include'
                 });
                 const data = await res.json();
 
@@ -479,7 +480,7 @@
         // Handle Logout
         async function handleLogout() {
             try {
-                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors' });
+                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
             } catch (err) {
                 console.error(err);
             }
