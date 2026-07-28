@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Violations - MotoWatch</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .page-link {
+            background-color: var(--glass-bg);
+            border-color: var(--glass-border);
+            color: var(--text-main);
+        }
+        .page-link:hover {
+            background-color: var(--steel-blue);
+            color: #ffffff;
+        }
+        .page-item.active .page-link {
+            background-color: #3b82f6;
+            border-color: #3b82f6;
+        }
+        .page-item.disabled .page-link {
+            background-color: rgba(255,255,255,0.05);
+            color: var(--text-muted);
+            border-color: var(--glass-border);
+        }
+    </style>
+</head>
+<body>
+    <div class="screen-overlay"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4 shadow">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="dashboard.html">
+                <i class="bi bi-shield-check text-primary"></i> MotoWatch
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="dashboard.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="violations.html">Violations</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="live-stream.html">Live Stream</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span class="text-white-50 me-3 small"><i class="bi bi-person-circle"></i> <span id="usernameDisplay">User</span></span>
+                    <button class="btn btn-outline-light btn-sm" onclick="handleLogout()">Sign Out</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        <h1 class="mb-4 fw-bold" style="letter-spacing: 1px;">
+            <i class="bi bi-exclamation-triangle"></i> Violations List
+        </h1>
+
+        <!-- Filter & Search -->
+        <div class="card mb-4 border-0">
+            <div class="card-body">
+                <form id="filterForm" class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="q" class="form-label text-white-50 small">Search ID or Plate</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-transparent border-end-0 text-white-50" style="border-color: rgba(255,255,255,0.1);"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control border-start-0" id="q" placeholder="Search..." style="border-color: rgba(255,255,255,0.1);">
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <label for="status" class="form-label text-white-50 small">Filter by Status</label>
+                        <select class="form-select" id="status" style="border-color: rgba(255,255,255,0.1);">
+                            <option value="ALL">All Statuses</option>
+                            <option value="UNVERIFIED">Pending Review</option>
+                            <option value="VERIFIED">Verified</option>
+                            <option value="REJECTED">Rejected</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary w-100 shadow-sm">Apply Filters</button>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-outline-secondary w-100" onclick="clearFilters()">Clear</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tabs Selection -->
+        <div class="d-flex mb-3">
+            <ul class="nav nav-pills" id="violationTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-semibold px-4 py-2 me-2" id="normalTab" onclick="switchTab('normal')" style="border-radius: 10px; font-size: 0.9rem;">
+                        <i class="bi bi-shield-check me-2"></i> Verified / Standard
+                        <span class="badge bg-light text-dark ms-2" id="normalCount">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold px-4 py-2" id="flaggedTab" onclick="switchTab('flagged')" style="border-radius: 10px; font-size: 0.9rem;">
+                        <i class="bi bi-flag me-2"></i> Flagged / Missing Plate
+                        <span class="badge bg-danger ms-2" id="flaggedCount">0</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Violations Table -->
+        <div class="card border-0 rounded-4 overflow-hidden mb-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light bg-opacity-50">
+                            <tr>
+                                <th class="ps-4">ID</th>
+                                <th>Preview</th>
+                                <th>Date Detected</th>
+                                <th>Violation Type</th>
+                                <th>License Plate</th>
+                                <th>Source</th>
+                                <th>Status</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="violationsTableBody">
+                            <tr>
+                                <td colspan="8" class="text-center text-muted py-5">
+                                    <div class="spinner-border text-primary" role="status"></div>
+                                    <div class="mt-2">Loading violations...</div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        <nav aria-label="Page navigation" class="mb-5">
+            <ul class="pagination justify-content-center" id="paginationContainer"></ul>
+        </nav>
+    </div>
+
+    <!-- Gallery Preview Modal -->
+    <div class="modal fade" id="galleryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content bg-dark border-secondary">
+                <div class="modal-header border-secondary text-white">
+                    <h5 class="modal-title">Evidence Media Viewer</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-0 bg-black">
+                    <img id="modalPreviewImg" src="" class="img-fluid" style="max-height: 70vh;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="config.js"></script>
+    <script>
+        const backendUrl = Config.getBackendUrl();
+        let currentTab = 'normal';
+        let currentPage = 1;
+
+        // Redirect if session is not authenticated
+        window.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'User';
+            
+            try {
+                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors' });
+                const data = await res.json();
+                if (!data.authenticated) {
+                    window.location.href = 'login.html';
+                } else {
+                    loadViolations();
+                }
+            } catch (err) {
+                console.error(err);
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Form Submit
+        document.getElementById('filterForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            currentPage = 1;
+            loadViolations();
+        });
+
+        function clearFilters() {
+            document.getElementById('q').value = '';
+            document.getElementById('status').value = 'ALL';
+            currentPage = 1;
+            loadViolations();
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            document.getElementById('normalTab').classList.toggle('active', tabName === 'normal');
+            document.getElementById('flaggedTab').classList.toggle('active', tabName === 'flagged');
+            currentPage = 1;
+            loadViolations();
+        }
+
+        async function loadViolations() {
+            const query = document.getElementById('q').value;
+            const status = document.getElementById('status').value;
+            
+            const tbody = document.getElementById('violationsTableBody');
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="8" class="text-center text-muted py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                        <div class="mt-2">Fetching records...</div>
+                    </td>
+                </tr>
+            `;
+
+            try {
+                const url = new URL(`${backendUrl}/violations/api/list`);
+                url.searchParams.append('tab', currentTab);
+                url.searchParams.append('page', currentPage);
+                if (query) url.searchParams.append('q', query);
+                if (status !== 'ALL') url.searchParams.append('status', status);
+
+                const res = await fetch(url.toString(), { mode: 'cors' });
+                const data = await res.json();
+
+                if (data.success) {
+                    // Update counts
+                    document.getElementById('normalCount').textContent = data.normal_count;
+                    document.getElementById('flaggedCount').textContent = data.flagged_count;
+
+                    // Render Table
+                    tbody.innerHTML = '';
+                    if (data.violations.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-5">No violations found matching filters.</td></tr>';
+                        document.getElementById('paginationContainer').innerHTML = '';
+                        return;
+                    }
+
+                    data.violations.forEach(v => {
+                        let statusBadge = '';
+                        if (v.status === 'VERIFIED') statusBadge = '<span class="badge badge-status-success">Verified</span>';
+                        else if (v.status === 'REJECTED') statusBadge = '<span class="badge badge-status-danger">Rejected</span>';
+                        else statusBadge = '<span class="badge badge-status-warning">Pending</span>';
+
+                        const formattedDate = new Date(v.detection_timestamp).toLocaleString();
+                        
+                        // Decide preview image URL
+                        let previewUrl = '';
+                        if (v.evidence_snapshot) {
+                            previewUrl = `${backendUrl}/violation-data/${v.evidence_snapshot}`;
+                        } else if (v.annotated_file) {
+                            previewUrl = `${backendUrl}/violation-data/${v.annotated_file}`;
+                        }
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="ps-4 fw-semibold text-white-50">#${v.id}</td>
+                            <td>
+                                ${previewUrl ? `
+                                    <img src="${previewUrl}" class="rounded border" style="width: 60px; height: 45px; object-fit: cover; cursor: pointer;" onclick="openPreview('${previewUrl}')">
+                                ` : '<span class="text-white-50 small">No Preview</span>'}
+                            </td>
+                            <td>${formattedDate}</td>
+                            <td><span class="badge badge-type-danger">${v.violation_category || 'No Helmet'}</span></td>
+                            <td class="fw-bold text-white">${v.plate_number || '<span class="text-white-50 font-normal">N/A</span>'}</td>
+                            <td class="small text-white-50">${v.source_type}</td>
+                            <td>${statusBadge}</td>
+                            <td class="text-center">
+                                <a href="violation-detail.html?id=${v.id}" class="btn btn-outline-light btn-sm"><i class="bi bi-eye"></i> Details</a>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+
+                    // Render Pagination
+                    renderPagination(data.pages, data.current_page);
+                }
+            } catch (err) {
+                console.error(err);
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-5">Error connecting to server. Please verify the backend is running.</td></tr>';
+            }
+        }
+
+        // Preview helper
+        const galleryModal = new bootstrap.Modal(document.getElementById('galleryModal'));
+        function openPreview(imgUrl) {
+            document.getElementById('modalPreviewImg').src = imgUrl;
+            galleryModal.show();
+        }
+
+        // Render pagination buttons
+        function renderPagination(totalPages, currentPageNum) {
+            const container = document.getElementById('paginationContainer');
+            container.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            // Previous Button
+            const prevLi = document.createElement('li');
+            prevLi.className = `page-item ${currentPageNum === 1 ? 'disabled' : ''}`;
+            prevLi.innerHTML = `<button class="page-link" onclick="changePage(${currentPageNum - 1})"><i class="bi bi-chevron-left"></i></button>`;
+            container.appendChild(prevLi);
+
+            // Page numbers
+            for (let i = 1; i <= totalPages; i++) {
+                const pageLi = document.createElement('li');
+                pageLi.className = `page-item ${i === currentPageNum ? 'active' : ''}`;
+                pageLi.innerHTML = `<button class="page-link" onclick="changePage(${i})">${i}</button>`;
+                container.appendChild(pageLi);
+            }
+
+            // Next Button
+            const nextLi = document.createElement('li');
+            nextLi.className = `page-item ${currentPageNum === totalPages ? 'disabled' : ''}`;
+            nextLi.innerHTML = `<button class="page-link" onclick="changePage(${currentPageNum + 1})"><i class="bi bi-chevron-right"></i></button>`;
+            container.appendChild(nextLi);
+        }
+
+        function changePage(pageIndex) {
+            currentPage = pageIndex;
+            loadViolations();
+        }
+
+        // Handle Logout
+        async function handleLogout() {
+            try {
+                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors' });
+            } catch (err) {
+                console.error(err);
+            }
+            localStorage.removeItem('user_name');
+            localStorage.removeItem('user_role');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

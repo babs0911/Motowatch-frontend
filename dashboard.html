@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - MotoWatch</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="screen-overlay"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark mb-4 shadow">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="dashboard.html">
+                <i class="bi bi-shield-check text-primary"></i> MotoWatch
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="dashboard.html">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="violations.html">Violations</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="live-stream.html">Live Stream</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <span class="text-white-50 me-3 small"><i class="bi bi-person-circle"></i> <span id="usernameDisplay">User</span></span>
+                    <button class="btn btn-outline-light btn-sm" onclick="handleLogout()">Sign Out</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        <!-- Dashboard Greeting -->
+        <div class="row mb-4">
+            <div class="col">
+                <h1 class="fw-bold"><i class="bi bi-speedometer2"></i> Dashboard Overview</h1>
+                <p class="text-muted">Real-time statistics and recent helmet violation detections.</p>
+            </div>
+        </div>
+
+        <!-- Metrics Cards -->
+        <div class="row g-4 mb-4">
+            <!-- Total Violations -->
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body d-flex align-items-center justify-content-between p-4">
+                        <div>
+                            <p class="text-muted mb-1 text-uppercase small font-bold">Total Violations</p>
+                            <h2 class="display-5 fw-bold text-white mb-0" id="totalViolations">0</h2>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 p-3 rounded-3 text-primary">
+                            <i class="bi bi-exclamation-triangle-fill fs-2"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Verification -->
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm border-start border-warning border-3">
+                    <div class="card-body d-flex align-items-center justify-content-between p-4">
+                        <div>
+                            <p class="text-muted mb-1 text-uppercase small font-bold">Pending Review</p>
+                            <h2 class="display-5 fw-bold text-warning mb-0" id="pendingVerification">0</h2>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-3 rounded-3 text-warning">
+                            <i class="bi bi-clock-history fs-2"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Verified Count -->
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm border-start border-success border-3">
+                    <div class="card-body d-flex align-items-center justify-content-between p-4">
+                        <div>
+                            <p class="text-muted mb-1 text-uppercase small font-bold">Verified Violations</p>
+                            <h2 class="display-5 fw-bold text-success mb-0" id="verifiedCount">0</h2>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-3 rounded-3 text-success">
+                            <i class="bi bi-patch-check-fill fs-2"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Rejected Count -->
+            <div class="col-md-3">
+                <div class="card h-100 border-0 shadow-sm border-start border-danger border-3">
+                    <div class="card-body d-flex align-items-center justify-content-between p-4">
+                        <div>
+                            <p class="text-muted mb-1 text-uppercase small font-bold">Rejected Violations</p>
+                            <h2 class="display-5 fw-bold text-danger mb-0" id="rejectedCount">0</h2>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 p-3 rounded-3 text-danger">
+                            <i class="bi bi-x-octagon-fill fs-2"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Access -->
+        <div class="row g-4 mb-4">
+            <!-- Recent List -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center p-3">
+                        <h5 class="mb-0 text-white"><i class="bi bi-list-check"></i> Recent Detections</h5>
+                        <a href="violations.html" class="btn btn-outline-primary btn-sm">View All</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-4">ID</th>
+                                        <th>Date</th>
+                                        <th>Violation Type</th>
+                                        <th>Plate Number</th>
+                                        <th>Status</th>
+                                        <th class="text-end pe-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="recentViolationsTable">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            <div class="spinner-border spinner-border-sm" role="status"></div> Loading recent violations...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CCTV Stream Promo -->
+            <div class="col-lg-4">
+                <div class="card border-0 shadow-sm h-100 text-center p-4 d-flex flex-column justify-content-center align-items-center">
+                    <div class="bg-primary bg-opacity-10 p-4 rounded-circle text-primary mb-4">
+                        <i class="bi bi-camera-video-fill" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h3 class="text-white mb-2">Live CCTV Monitoring</h3>
+                    <p class="text-muted mb-4 small">Monitor your camera feeds and run real-time helmet detection AI models directly on the live stream.</p>
+                    <a href="live-stream.html" class="btn btn-primary px-4 py-2 w-100 fw-bold"><i class="bi bi-play-fill"></i> Watch Live Stream</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="config.js"></script>
+    <script>
+        const backendUrl = Config.getBackendUrl();
+
+        // Redirect if session is not authenticated
+        window.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'User';
+            
+            try {
+                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors' });
+                const data = await res.json();
+                if (!data.authenticated) {
+                    window.location.href = 'login.html';
+                } else {
+                    loadStats();
+                    loadRecentViolations();
+                }
+            } catch (err) {
+                console.error(err);
+                window.location.href = 'login.html';
+            }
+        });
+
+        // Load statistics
+        async function loadStats() {
+            try {
+                const res = await fetch(`${backendUrl}/api/stats`, { mode: 'cors' });
+                const data = await res.json();
+                if (data.success) {
+                    document.getElementById('totalViolations').textContent = data.total_violations;
+                    document.getElementById('pendingVerification').textContent = data.pending_verification;
+                    document.getElementById('verifiedCount').textContent = data.verified_count;
+                    document.getElementById('rejectedCount').textContent = data.rejected_count;
+                }
+            } catch (err) {
+                console.error('Error fetching stats:', err);
+            }
+        }
+
+        // Load recent violations
+        async function loadRecentViolations() {
+            try {
+                const res = await fetch(`${backendUrl}/violations/api/list?per_page=5`, { mode: 'cors' });
+                const data = await res.json();
+                
+                if (data.success) {
+                    const tbody = document.getElementById('recentViolationsTable');
+                    tbody.innerHTML = '';
+                    
+                    if (data.violations.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No violations detected yet.</td></tr>';
+                        return;
+                    }
+                    
+                    data.violations.forEach(v => {
+                        let statusBadge = '';
+                        if (v.status === 'VERIFIED') statusBadge = '<span class="badge badge-status-success">Verified</span>';
+                        else if (v.status === 'REJECTED') statusBadge = '<span class="badge badge-status-danger">Rejected</span>';
+                        else statusBadge = '<span class="badge badge-status-warning">Pending</span>';
+
+                        const formattedDate = new Date(v.detection_timestamp).toLocaleString();
+                        
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td class="ps-4 fw-semibold text-white-50">#${v.id}</td>
+                            <td>${formattedDate}</td>
+                            <td><span class="badge badge-type-danger">${v.violation_category || 'No Helmet'}</span></td>
+                            <td class="fw-bold text-white">${v.plate_number || '<span class="text-white-50 font-normal">N/A</span>'}</td>
+                            <td>${statusBadge}</td>
+                            <td class="text-end pe-4">
+                                <a href="violation-detail.html?id=${v.id}" class="btn btn-outline-light btn-sm"><i class="bi bi-eye"></i> Details</a>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading recent violations:', err);
+            }
+        }
+
+        // Handle Logout
+        async function handleLogout() {
+            try {
+                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors' });
+            } catch (err) {
+                console.error('Logout request failed:', err);
+            }
+            localStorage.removeItem('user_name');
+            localStorage.removeItem('user_role');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
