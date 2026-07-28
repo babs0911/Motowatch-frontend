@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal - MotoWatch</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&family=Open+Sans:wght@300;400;600&display=swap" rel="stylesheet">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+    
+    <style>
+        body {
+            background: linear-gradient(rgba(13, 27, 42, 0.8), rgba(13, 27, 42, 0.8)),
+            url("img/bg.png") no-repeat center center fixed !important;
+            background-size: cover !important;
+        }
+
+        /* Main Hero Area */
+        .dashboard-hero {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(50vh - 200px);
+            text-align: center;
+            color: #ffffff;
+            padding: 80px;
+        }
+
+        .welcome-text {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 4rem;
+            font-weight: 300;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.6);
+        }
+
+        .welcome-text strong {
+            font-weight: 800;
+        }
+
+        .what-to-do {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 300;
+            margin-bottom: 30px;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Icon Grid */
+        .icon-nav {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5vw;
+            padding: 20px;
+            margin-top: -20px;
+            padding-bottom: 40px;
+        }
+
+        .icon-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #ffffff;
+            text-decoration: none;
+            transition: transform 0.2s, opacity 0.2s;
+            width: 100px;
+        }
+
+        .icon-item:hover {
+            transform: translateY(-5px);
+            color: #ffffff;
+            opacity: 0.9;
+        }
+
+        .icon-item .circle-icon {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            position: relative;
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+        .icon-item .circle-icon i {
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.2);
+        }
+
+        .icon-item .badge-count {
+            position: absolute;
+            bottom: -5px;
+            right: -10px;
+            background: #28a745;
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 3px 7px;
+            border-radius: 12px;
+            border: 2px solid rgba(13, 62, 163, 0.8);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+        }
+
+        .icon-item span.title {
+            font-family: 'Open Sans', sans-serif;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.8);
+        }
+
+        @media (max-width: 768px) {
+            .welcome-text {
+                font-size: 2.5rem;
+            }
+
+            .what-to-do {
+                font-size: 1.2rem;
+            }
+
+            .icon-nav {
+                gap: 15px;
+            }
+
+            .icon-item {
+                width: 80px;
+            }
+
+            .icon-item .circle-icon {
+                font-size: 1.8rem;
+            }
+
+            .icon-item span.title {
+                font-size: 0.7rem;
+            }
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div class="screen-overlay"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg border-bottom" style="background: rgba(13, 27, 42, 0.95); backdrop-filter: blur(10px); border-color: rgba(255,255,255,0.05) !important;">
+        <div class="container-fluid px-4 px-lg-5">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="portal.html" style="font-family: 'Montserrat', sans-serif; letter-spacing: 1px; color: #ffffff;">
+                <img src="img/logo.png" alt="Logo" style="height: 45px; margin-right: 15px;"> MOTOWATCH
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" style="border-color: rgba(255,255,255,0.1);">
+                <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white fw-bold" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i> <span id="usernameDisplay">USER</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark border-secondary shadow-lg">
+                            <li><a class="dropdown-item text-danger py-2" href="#" onclick="handleLogout()">
+                                <i class="bi bi-box-arrow-right me-2"></i> LOGOUT
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Welcome Hero -->
+    <div class="container my-4 flex-grow-1 d-flex flex-column justify-content-center">
+        <div class="dashboard-hero">
+            <div class="welcome-text">WELCOME, <strong id="heroUsername">ADMIN</strong></div>
+            <div class="what-to-do">What would you like to do?</div>
+        </div>
+
+        <!-- Navigation Grid -->
+        <div class="icon-nav">
+            <a href="dashboard.html" class="icon-item">
+                <div class="circle-icon">
+                    <i class="bi bi-speedometer2"></i>
+                </div>
+                <span class="title">DASHBOARD</span>
+            </a>
+
+            <a href="violations.html" class="icon-item">
+                <div class="circle-icon">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <div class="badge-count d-none" id="totalViolationsBadge">0</div>
+                </div>
+                <span class="title">VIOLATIONS</span>
+            </a>
+
+            <a href="live-stream.html" class="icon-item">
+                <div class="circle-icon">
+                    <i class="bi bi-camera-video"></i>
+                </div>
+                <span class="title">LIVESTREAM</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-4" style="background: rgba(13, 27, 42, 0.95); border-top: 1px solid rgba(255,255,255,0.05);">
+        <div class="container text-center">
+            <span style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong>Note:</strong> MotoWatch is for monitoring and violation detection — not primary enforcement.
+            </span>
+        </div>
+    </footer
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="config.js"></script>
+    <script>
+        const backendUrl = Config.getBackendUrl();
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const username = (localStorage.getItem('user_name') || 'User').toUpperCase();
+            document.getElementById('usernameDisplay').textContent = username;
+            document.getElementById('heroUsername').textContent = username;
+            
+            try {
+                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors', credentials: 'include' });
+                const data = await res.json();
+                if (!data.authenticated) {
+                    window.location.href = 'login.html';
+                } else {
+                    loadStats();
+                }
+            } catch (err) {
+                console.error(err);
+                window.location.href = 'login.html';
+            }
+        });
+
+        async function loadStats() {
+            try {
+                const res = await fetch(`${backendUrl}/api/stats`, { mode: 'cors', credentials: 'include' });
+                const data = await res.json();
+                if (data.success && data.total_violations > 0) {
+                    const badge = document.getElementById('totalViolationsBadge');
+                    badge.textContent = data.total_violations;
+                    badge.classList.remove('d-none');
+                }
+            } catch (err) {
+                console.error('Error fetching stats:', err);
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
+            } catch (err) {
+                console.error(err);
+            }
+            localStorage.removeItem('user_name');
+            localStorage.removeItem('user_role');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

@@ -11,7 +11,7 @@
                 const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors' });
                 const data = await res.json();
                 if (data.authenticated) {
-                    window.location.href = 'dashboard.html';
+                    window.location.href = 'portal.html';
                 } else {
                     window.location.href = 'login.html';
                 }

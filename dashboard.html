@@ -13,130 +13,136 @@
     <!-- Custom Style -->
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     <div class="screen-overlay"></div>
 
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg navbar-dark mb-4 shadow">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="dashboard.html">
-                <i class="bi bi-shield-check text-primary"></i> MotoWatch
+    <nav class="navbar navbar-expand-lg border-bottom" style="background: rgba(13, 27, 42, 0.95); backdrop-filter: blur(10px); border-color: rgba(255,255,255,0.05) !important;">
+        <div class="container-fluid px-4 px-lg-5">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="portal.html" style="font-family: 'Montserrat', sans-serif; letter-spacing: 1px; color: #ffffff;">
+                <img src="img/logo.png" alt="Logo" style="height: 45px; margin-right: 15px;"> MOTOWATCH
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" style="border-color: rgba(255,255,255,0.1);">
+                <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
-                        <a class="nav-link active" href="dashboard.html">Dashboard</a>
+                        <a class="nav-link px-3 text-white-50" href="portal.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-house-door"></i> Home
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="violations.html">Violations</a>
+                        <a class="nav-link px-3 active text-white fw-bold" href="dashboard.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="live-stream.html">Live Stream</a>
+                        <a class="nav-link px-3 text-white-50" href="violations.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-exclamation-triangle"></i> Violations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 text-white-50" href="live-stream.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-camera-video"></i> Livestream
+                        </a>
                     </li>
                 </ul>
-                <div class="d-flex align-items-center">
-                    <span class="text-white-50 me-3 small"><i class="bi bi-person-circle"></i> <span id="usernameDisplay">User</span></span>
-                    <button class="btn btn-outline-light btn-sm" onclick="handleLogout()">Sign Out</button>
-                </div>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white fw-bold" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i> <span id="usernameDisplay">USER</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark border-secondary shadow-lg">
+                            <li><a class="dropdown-item text-danger py-2" href="#" onclick="handleLogout()">
+                                <i class="bi bi-box-arrow-right me-2"></i> LOGOUT
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container-fluid px-4">
-        <!-- Dashboard Greeting -->
+    <!-- Main Content -->
+    <main class="container my-4 flex-grow-1" style="position: relative;">
+        <h1 class="mb-4" style="font-family: 'Montserrat', sans-serif; font-weight: 800; letter-spacing: 1px;">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </h1>
+
+        <!-- Quick Stats -->
+        <div class="row mb-4 g-3">
+            <div class="col-md-3">
+                <div class="card border-0 h-100" style="background: rgba(30, 64, 175, 0.4) !important; margin-bottom: 0;">
+                    <div class="card-body">
+                        <h5 class="card-title text-white-50" style="font-size: 0.8rem; text-transform: uppercase;">Total Violations</h5>
+                        <h2 class="mb-0 fw-bold" id="totalViolations">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 h-100" style="background: rgba(180, 83, 9, 0.4) !important; margin-bottom: 0;">
+                    <div class="card-body">
+                        <h5 class="card-title text-white-50" style="font-size: 0.8rem; text-transform: uppercase;">Pending Verification</h5>
+                        <h2 class="mb-0 fw-bold" id="pendingVerification">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 h-100" style="background: rgba(21, 128, 61, 0.4) !important; margin-bottom: 0;">
+                    <div class="card-body">
+                        <h5 class="card-title text-white-50" style="font-size: 0.8rem; text-transform: uppercase;">Verified</h5>
+                        <h2 class="mb-0 fw-bold" id="verifiedCount">0</h2>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card border-0 h-100" style="background: rgba(185, 28, 28, 0.4) !important; margin-bottom: 0;">
+                    <div class="card-body">
+                        <h5 class="card-title text-white-50" style="font-size: 0.8rem; text-transform: uppercase;">Rejected</h5>
+                        <h2 class="mb-0 fw-bold" id="rejectedCount">0</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
         <div class="row mb-4">
-            <div class="col">
-                <h1 class="fw-bold"><i class="bi bi-speedometer2"></i> Dashboard Overview</h1>
-                <p class="text-muted">Real-time statistics and recent helmet violation detections.</p>
-            </div>
-        </div>
-
-        <!-- Metrics Cards -->
-        <div class="row g-4 mb-4">
-            <!-- Total Violations -->
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm">
-                    <div class="card-body d-flex align-items-center justify-content-between p-4">
-                        <div>
-                            <p class="text-muted mb-1 text-uppercase small font-bold">Total Violations</p>
-                            <h2 class="display-5 fw-bold text-white mb-0" id="totalViolations">0</h2>
-                        </div>
-                        <div class="bg-primary bg-opacity-10 p-3 rounded-3 text-primary">
-                            <i class="bi bi-exclamation-triangle-fill fs-2"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pending Verification -->
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm border-start border-warning border-3">
-                    <div class="card-body d-flex align-items-center justify-content-between p-4">
-                        <div>
-                            <p class="text-muted mb-1 text-uppercase small font-bold">Pending Review</p>
-                            <h2 class="display-5 fw-bold text-warning mb-0" id="pendingVerification">0</h2>
-                        </div>
-                        <div class="bg-warning bg-opacity-10 p-3 rounded-3 text-warning">
-                            <i class="bi bi-clock-history fs-2"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Verified Count -->
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm border-start border-success border-3">
-                    <div class="card-body d-flex align-items-center justify-content-between p-4">
-                        <div>
-                            <p class="text-muted mb-1 text-uppercase small font-bold">Verified Violations</p>
-                            <h2 class="display-5 fw-bold text-success mb-0" id="verifiedCount">0</h2>
-                        </div>
-                        <div class="bg-success bg-opacity-10 p-3 rounded-3 text-success">
-                            <i class="bi bi-patch-check-fill fs-2"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Rejected Count -->
-            <div class="col-md-3">
-                <div class="card h-100 border-0 shadow-sm border-start border-danger border-3">
-                    <div class="card-body d-flex align-items-center justify-content-between p-4">
-                        <div>
-                            <p class="text-muted mb-1 text-uppercase small font-bold">Rejected Violations</p>
-                            <h2 class="display-5 fw-bold text-danger mb-0" id="rejectedCount">0</h2>
-                        </div>
-                        <div class="bg-danger bg-opacity-10 p-3 rounded-3 text-danger">
-                            <i class="bi bi-x-octagon-fill fs-2"></i>
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3 text-white">Quick Actions</h5>
+                        <div class="btn-group" role="group">
+                            <a href="violations.html" class="btn btn-outline-warning">
+                                <i class="bi bi-exclamation-triangle"></i> Review Pending
+                            </a>
+                            <a href="live-stream.html" class="btn btn-outline-info">
+                                <i class="bi bi-camera-video"></i> View Livestream
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Quick Access -->
-        <div class="row g-4 mb-4">
-            <!-- Recent List -->
-            <div class="col-lg-8">
-                <div class="card border-0 shadow-sm h-100">
-                    <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center p-3">
-                        <h5 class="mb-0 text-white"><i class="bi bi-list-check"></i> Recent Detections</h5>
-                        <a href="violations.html" class="btn btn-outline-primary btn-sm">View All</a>
+        <!-- Recent Violations -->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-transparent">
+                        <h5 class="mb-0 text-white">Recent Violations</h5>
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
                             <table class="table table-hover align-middle mb-0">
                                 <thead>
                                     <tr>
-                                        <th class="ps-4">ID</th>
-                                        <th>Date</th>
-                                        <th>Violation Type</th>
-                                        <th>Plate Number</th>
+                                        <th>ID</th>
+                                        <th>Time</th>
+                                        <th>Type</th>
+                                        <th>Plate</th>
                                         <th>Status</th>
-                                        <th class="text-end pe-4">Actions</th>
+                                        <th>Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="recentViolationsTable">
@@ -151,20 +157,18 @@
                     </div>
                 </div>
             </div>
-
-            <!-- CCTV Stream Promo -->
-            <div class="col-lg-4">
-                <div class="card border-0 shadow-sm h-100 text-center p-4 d-flex flex-column justify-content-center align-items-center">
-                    <div class="bg-primary bg-opacity-10 p-4 rounded-circle text-primary mb-4">
-                        <i class="bi bi-camera-video-fill" style="font-size: 3.5rem;"></i>
-                    </div>
-                    <h3 class="text-white mb-2">Live CCTV Monitoring</h3>
-                    <p class="text-muted mb-4 small">Monitor your camera feeds and run real-time helmet detection AI models directly on the live stream.</p>
-                    <a href="live-stream.html" class="btn btn-primary px-4 py-2 w-100 fw-bold"><i class="bi bi-play-fill"></i> Watch Live Stream</a>
-                </div>
-            </div>
         </div>
-    </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-4" style="background: rgba(13, 27, 42, 0.95); border-top: 1px solid rgba(255,255,255,0.05);">
+        <div class="container text-center">
+            <span style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong>Note:</strong> MotoWatch is for monitoring and violation detection — not primary enforcement.
+            </span>
+        </div>
+    </footer>
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -174,7 +178,7 @@
 
         // Redirect if session is not authenticated
         window.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'User';
+            document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'USER';
             
             try {
                 const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors', credentials: 'include' });
@@ -210,7 +214,7 @@
         // Load recent violations
         async function loadRecentViolations() {
             try {
-                const res = await fetch(`${backendUrl}/violations/api/list?per_page=5`, { mode: 'cors', credentials: 'include' });
+                const res = await fetch(`${backendUrl}/violations/api/list?per_page=10`, { mode: 'cors', credentials: 'include' });
                 const data = await res.json();
                 
                 if (data.success) {
@@ -224,21 +228,28 @@
                     
                     data.violations.forEach(v => {
                         let statusBadge = '';
-                        if (v.status === 'VERIFIED') statusBadge = '<span class="badge badge-status-success">Verified</span>';
-                        else if (v.status === 'REJECTED') statusBadge = '<span class="badge badge-status-danger">Rejected</span>';
-                        else statusBadge = '<span class="badge badge-status-warning">Pending</span>';
+                        if (v.status === 'UNVERIFIED') statusBadge = '<span class="badge badge-status-warning">UNVERIFIED</span>';
+                        else if (v.status === 'VERIFIED') statusBadge = '<span class="badge badge-status-success">VERIFIED</span>';
+                        else if (v.status === 'REJECTED') statusBadge = '<span class="badge badge-status-danger">REJECTED</span>';
+                        else statusBadge = `<span class="badge badge-status-info">${v.status}</span>`;
 
                         const formattedDate = new Date(v.detection_timestamp).toLocaleString();
                         
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
-                            <td class="ps-4 fw-semibold text-white-50">#${v.id}</td>
+                            <td>${v.id}</td>
                             <td>${formattedDate}</td>
-                            <td><span class="badge badge-type-danger">${v.violation_category || 'No Helmet'}</span></td>
-                            <td class="fw-bold text-white">${v.plate_number || '<span class="text-white-50 font-normal">N/A</span>'}</td>
+                            <td>
+                                <span class="badge badge-type-danger">
+                                    ${v.violation_class === 'Non-compliant' || v.violation_class === 'invalid_helmet' ? 'Non-compliant' : v.violation_class}
+                                </span>
+                            </td>
+                            <td>${v.plate_number || 'N/A'}</td>
                             <td>${statusBadge}</td>
-                            <td class="text-end pe-4">
-                                <a href="violation-detail.html?id=${v.id}" class="btn btn-outline-light btn-sm"><i class="bi bi-eye"></i> Details</a>
+                            <td>
+                                <a href="violation-detail.html?id=${v.id}" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
                             </td>
                         `;
                         tbody.appendChild(tr);
@@ -254,7 +265,7 @@
             try {
                 await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
             } catch (err) {
-                console.error('Logout request failed:', err);
+                console.error(err);
             }
             localStorage.removeItem('user_name');
             localStorage.removeItem('user_role');
