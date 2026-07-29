@@ -286,9 +286,10 @@
 
                     data.violations.forEach(v => {
                         let statusBadge = '';
-                        if (v.status === 'VERIFIED') statusBadge = '<span class="badge badge-status-success">VERIFIED</span>';
-                        else if (v.status === 'REJECTED') statusBadge = '<span class="badge badge-status-danger">REJECTED</span>';
-                        else statusBadge = '<span class="badge badge-status-warning">UNVERIFIED</span>';
+                        if (v.status === 'UNVERIFIED' || v.status === 'LOGGED_ONLY') statusBadge = '<span class="badge badge-status-warning px-3 shadow-sm">UNVERIFIED</span>';
+                        else if (v.status === 'VERIFIED') statusBadge = '<span class="badge badge-status-success px-3 shadow-sm">VERIFIED</span>';
+                        else if (v.status === 'REJECTED') statusBadge = '<span class="badge badge-status-danger px-3 shadow-sm">REJECTED</span>';
+                        else statusBadge = `<span class="badge badge-status-info px-3 shadow-sm">${v.status}</span>`;
 
                         const formattedDate = new Date(v.detection_timestamp).toLocaleString();
                         
@@ -298,27 +299,53 @@
                             previewUrl = `${backendUrl}/violation-data/${v.evidence_snapshot}`;
                         } else if (v.annotated_file) {
                             previewUrl = `${backendUrl}/violation-data/${v.annotated_file}`;
+                        } else if (v.frame_images && v.frame_images.length > 0) {
+                            previewUrl = `${backendUrl}/violation-data/${v.frame_images[0]}`;
+                        }
+
+                        let frameCountBadge = '';
+                        if (v.frame_images && v.frame_images.length > 0) {
+                            frameCountBadge = `
+                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary shadow" style="font-size:0.6rem; z-index: 1;">
+                                    ${v.frame_images.length}
+                                </span>
+                            `;
                         }
 
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
                             <td class="ps-4 fw-semibold text-white-50">#${v.id}</td>
                             <td>
-                                ${previewUrl ? `
-                                    <img src="${previewUrl}" class="rounded border" style="width: 60px; height: 45px; object-fit: cover; cursor: pointer;" onclick="openPreview('${previewUrl}')">
-                                ` : '<span class="text-white-50 small">No Preview</span>'}
+                                <div class="position-relative d-inline-block">
+                                    ${previewUrl ? `
+                                        <img src="${previewUrl}" alt="Preview" class="img-thumbnail shadow-sm" style="width:80px;height:56px;object-fit:cover;border-radius:10px;cursor:pointer; transition: transform 0.2s;" onclick="openPreview('${previewUrl}', ${JSON.stringify(v.frame_images || [])})">
+                                    ` : `
+                                        <div style="width:80px;height:56px;background:#f8f9fa;border-radius:10px;border:1px solid #dee2e6;display:flex;align-items:center;justify-content:center;">
+                                            <i class="bi bi-image text-muted"></i>
+                                        </div>
+                                    `}
+                                    ${frameCountBadge}
+                                </div>
                             </td>
                             <td>${formattedDate}</td>
                             <td>
-                                <span class="badge badge-type-danger">
-                                    ${v.violation_class === 'Non-compliant' || v.violation_class === 'invalid_helmet' ? 'Non-compliant' : v.violation_class}
+                                <span class="badge badge-type-danger px-3 shadow-sm">
+                                    ${(v.violation_class || '').toLowerCase() === 'no_helmet' || (v.violation_class || '').toLowerCase() === 'no helmet' || v.violation_class === 'invalid_helmet' || v.violation_class === 'Non-compliant' ? 'Non-Compliant' : v.violation_class}
                                 </span>
                             </td>
-                            <td class="fw-bold text-white">${v.plate_number || '<span class="text-white-50 font-normal">N/A</span>'}</td>
-                            <td class="small text-white-50">${v.source_type}</td>
+                            <td>
+                                ${v.plate_number ? `<strong class="font-monospace text-white">${v.plate_number}</strong>` : '<span class="text-white-50 small italic">Not Detected</span>'}
+                            </td>
+                            <td>
+                                <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 border border-info border-opacity-25 shadow-sm">
+                                    <i class="bi bi-geo-alt-fill"></i> GZ Building
+                                </span>
+                            </td>
                             <td>${statusBadge}</td>
-                            <td class="text-center">
-                                <a href="violation-detail.html?id=${v.id}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i> View</a>
+                            <td class="text-center pe-4">
+                                <a href="violation-detail.html?id=${v.id}" class="btn btn-sm btn-outline-primary rounded-circle p-2 d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 36px; height: 36px;" title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
                             </td>
                         `;
                         tbody.appendChild(tr);

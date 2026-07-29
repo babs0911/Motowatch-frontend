@@ -12,6 +12,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Custom Style -->
     <link rel="stylesheet" href="style.css">
+    
+    <style>
+        .carousel-thumb {
+            width: 62px;
+            height: 44px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            opacity: 0.6;
+            transition: all 0.15s;
+        }
+        .carousel-thumb.active {
+            border-color: #0d6efd;
+            opacity: 1;
+        }
+    </style>
 </head>
 <body class="d-flex flex-column min-vh-100">
     <div class="screen-overlay"></div>
@@ -66,158 +83,205 @@
 
     <!-- Main Content -->
     <main class="container my-4 flex-grow-1" style="position: relative;">
-        <!-- Back Button & Header -->
-        <div class="mb-4 d-flex justify-content-between align-items-center">
-            <a href="violations.html" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left"></i> Back to List</a>
-            <h2 class="fw-bold mb-0">Violation Case #<span id="caseId">--</span></h2>
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 style="font-family: 'Montserrat', sans-serif; font-weight: 800; letter-spacing: 1px;">
+                <i class="bi bi-exclamation-triangle"></i> Violation #<span id="headerViolationId">--</span>
+            </h1>
+            <a href="violations.html" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to List
+            </a>
         </div>
 
         <div id="alertBox" class="alert alert-dismissible d-none" role="alert"></div>
 
-        <div class="row g-4">
-            <!-- Left: Media/Images Section -->
-            <div class="col-lg-6">
-                <!-- Main Evidence Card -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-transparent"><i class="bi bi-image"></i> Primary Evidence</div>
-                    <div class="card-body p-2 text-center bg-black rounded-bottom-4">
-                        <img id="primaryEvidenceImg" src="" class="img-fluid rounded border border-secondary" style="max-height: 550px; object-fit: contain;">
-                        <div id="noMediaMsg" class="text-muted py-5 d-none">No media files available.</div>
+        <div class="row">
+            <!-- Left Column: Evidence Gallery & Audit logs (col-md-8) -->
+            <div class="col-md-8">
+                <!-- Evidence Carousel Card -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-images"></i> Evidence Gallery</h5>
+                        <span class="badge bg-primary d-none" id="framesCountBadge">0 frames</span>
                     </div>
-                </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-12 mb-3">
+                                <div id="evidenceCarousel" class="carousel slide">
+                                    <div class="carousel-inner rounded" id="carouselInner" style="background:#111;max-height:460px;overflow:hidden;">
+                                        <div class="carousel-item active text-center text-muted py-5">
+                                            <div class="spinner-border spinner-border-sm" role="status"></div> Loading images...
+                                        </div>
+                                    </div>
+                                    <button class="carousel-control-prev" type="button" data-bs-target="#evidenceCarousel" data-bs-slide="prev" style="width:40px;height:40px;top:50%;transform:translateY(-50%);left:8px;background:rgba(0,0,0,0.55);border-radius:50%;border:none;">
+                                        <span class="carousel-control-prev-icon"></span>
+                                        <span class="visually-hidden">Previous</span>
+                                    </button>
+                                    <button class="carousel-control-next" type="button" data-bs-target="#evidenceCarousel" data-bs-slide="next" style="width:40px;height:40px;top:50%;transform:translateY(-50%);right:8px;background:rgba(0,0,0,0.55);border-radius:50%;border:none;">
+                                        <span class="carousel-control-next-icon"></span>
+                                        <span class="visually-hidden">Next</span>
+                                    </button>
+                                </div>
 
-                <!-- Snapshot / Crop Details -->
-                <div class="row g-3">
-                    <!-- Plate Crop -->
-                    <div class="col-md-6">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-header bg-transparent text-white-50 small font-bold">Plate Crop (AI Region of Interest)</div>
-                            <div class="card-body d-flex flex-column align-items-center justify-content-center bg-black bg-opacity-25 py-4">
-                                <img id="plateCropImg" src="" class="img-fluid rounded border mb-2" style="max-height: 100px; object-fit: contain;">
-                                <div id="noPlateCropMsg" class="text-muted small">No plate crop available</div>
+                                <!-- Thumbnail strip for burst frames -->
+                                <div class="mt-3 d-none" id="thumbStripContainer">
+                                    <label class="text-muted small mb-2 d-block">Evidence Frames</label>
+                                    <div id="thumbStrip" class="d-flex flex-wrap gap-2"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Crops and Evidence snapshots row -->
+                        <div class="row mt-4">
+                            <div class="col-md-6 mb-3 d-none" id="snapshotCropCol">
+                                <h6>Captured License Plate (Evidence)</h6>
+                                <img id="evidenceSnapshotImg" src="" class="img-fluid border rounded" alt="Captured License Plate" style="max-height: 200px; object-fit: contain;">
+                            </div>
+                            <div class="col-md-6 mb-3 d-none" id="rawCropCol">
+                                <h6>License Plate Crop (Raw)</h6>
+                                <img id="plateCropImg" class="img-fluid border" alt="Raw Plate">
+                            </div>
+                            <div class="col-md-6 mb-3 d-none" id="processedCropCol">
+                                <h6>License Plate Crop (Processed)</h6>
+                                <img id="plateCropProcessedImg" class="img-fluid border" alt="Processed Plate">
                             </div>
                         </div>
                     </div>
-
-                    <!-- Video Burst/Multi-Frame (if any) -->
-                    <div class="col-md-6">
-                        <div class="card border-0 shadow-sm h-100">
-                            <div class="card-header bg-transparent text-white-50 small font-bold">Captured Burst Frames</div>
-                            <div class="card-body p-2">
-                                <div id="burstContainer" class="d-flex flex-wrap gap-2 justify-content-start overflow-y-auto" style="max-height: 140px;"></div>
-                                <div id="noBurstMsg" class="text-muted small text-center py-3">Single frame capture</div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right: Details & Operations Section -->
-            <div class="col-lg-6">
-                <!-- Case Status Banner -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-body p-4 d-flex justify-content-between align-items-center">
-                        <div>
-                            <h4 class="mb-1 text-white">Status Check</h4>
-                            <p class="text-muted mb-0 small" id="caseTimestamp">Detected on: --</p>
-                        </div>
-                        <div id="caseStatusBadge">--</div>
-                    </div>
                 </div>
 
-                <!-- Detection Stats -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-transparent"><i class="bi bi-cpu"></i> AI Pipeline Detection</div>
-                    <div class="card-body p-0">
-                        <ul class="list-group list-group-flush rounded-bottom-4">
-                            <li class="list-group-item bg-transparent text-white border-secondary border-opacity-25 d-flex justify-content-between">
-                                <span class="text-white-50">Violation Type:</span>
-                                <span class="badge badge-type-danger" id="violationType">--</span>
-                            </li>
-                            <li class="list-group-item bg-transparent text-white border-secondary border-opacity-25 d-flex justify-content-between">
-                                <span class="text-white-50">Model Confidence:</span>
-                                <span class="fw-bold" id="modelConfidence">0.0%</span>
-                            </li>
-                            <li class="list-group-item bg-transparent text-white border-secondary border-opacity-25 d-flex justify-content-between">
-                                <span class="text-white-50">Source Stream:</span>
-                                <span id="sourceType">--</span>
-                            </li>
-                            <li class="list-group-item bg-transparent text-white border-secondary border-opacity-25 d-flex justify-content-between">
-                                <span class="text-white-50">OCR Plate Prediction:</span>
-                                <span class="fw-bold text-primary" id="ocrPlatePrediction">--</span>
-                            </li>
-                        </ul>
+                <!-- Audit Log Card -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Audit Trail</h5>
                     </div>
-                </div>
-
-                <!-- Violator Profile Card -->
-                <div class="card border-0 shadow-sm mb-4">
-                    <div class="card-header bg-transparent d-flex justify-content-between align-items-center">
-                        <span><i class="bi bi-person-bounding-box"></i> Registered Owner Profile</span>
-                        <span id="violatorMatchStatus" class="small"></span>
-                    </div>
-                    <div class="card-body p-0" id="violatorInfoContainer">
-                        <ul class="list-group list-group-flush rounded-bottom-4">
-                            <li class="list-group-item bg-transparent text-white border-secondary border-opacity-25 d-flex justify-content-between">
-                                <span class="text-white-50">Owner Name:</span>
-                                <span class="fw-bold" id="ownerName">--</span>
-                            </li>
-                            <li class="list-group-item bg-transparent text-white border-secondary border-opacity-25 d-flex justify-content-between">
-                                <span class="text-white-50">License Plate:</span>
-                                <span class="badge bg-primary text-white" id="ownerPlate">--</span>
-                            </li>
-                            <li class="list-group-item bg-transparent text-white border-secondary border-opacity-25 d-flex justify-content-between">
-                                <span class="text-white-50">Contact Number:</span>
-                                <span id="ownerPhone">--</span>
-                            </li>
-                            <li class="list-group-item bg-transparent text-white border-secondary border-opacity-25 d-flex justify-content-between">
-                                <span class="text-white-50">Email Address:</span>
-                                <span id="ownerEmail">--</span>
-                            </li>
-                            <li class="list-group-item bg-transparent text-white border-secondary border-opacity-25 d-flex justify-content-between">
-                                <span class="text-white-50">Mailing Address:</span>
-                                <span id="ownerAddress" class="text-end" style="max-width: 60%">--</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Operations Card (Actions) -->
-                <div class="card border-0 shadow-sm mb-4" id="actionsCard">
-                    <div class="card-header bg-transparent"><i class="bi bi-check2-circle"></i> Verification Actions</div>
-                    <div class="card-body d-flex flex-wrap gap-2 justify-content-start">
-                        <button class="btn btn-success flex-grow-1" onclick="openActionModal('verify')"><i class="bi bi-check-lg"></i> Verify & Notify</button>
-                        <button class="btn btn-danger flex-grow-1" onclick="openActionModal('reject')"><i class="bi bi-x-lg"></i> Reject Case</button>
-                        <button class="btn btn-outline-warning flex-grow-1 text-white" onclick="openActionModal('edit')"><i class="bi bi-pencil-square text-warning"></i> Edit Details</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Audit Trail -->
-        <div class="row mt-4">
-            <div class="col-12">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-header bg-transparent"><i class="bi bi-clock-history"></i> Verification Audit Log</div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
+                            <table class="table table-sm mb-0">
                                 <thead>
                                     <tr>
-                                        <th class="ps-4">Timestamp</th>
-                                        <th>Validator</th>
+                                        <th class="ps-3">Time</th>
+                                        <th>User</th>
                                         <th>Action</th>
                                         <th>Details</th>
-                                        <th>Reason/Notes</th>
                                     </tr>
                                 </thead>
                                 <tbody id="auditLogsBody">
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">No audit history recorded.</td>
+                                        <td colspan="4" class="text-center text-muted py-4">No audit logs yet.</td>
                                     </tr>
                                 </tbody>
                             </table>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: System Review, Violator Info, Verification Actions (col-md-4) -->
+            <div class="col-md-4">
+                <!-- System Review Card -->
+                <div class="card mb-4 border-0 rounded-4 overflow-hidden">
+                    <div class="card-header border-0 pt-4 pb-0 bg-transparent">
+                        <h5 class="fw-bold mb-0 text-white">System Review</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-4">
+                            <label class="text-white-50 small d-block mb-1">Current Status</label>
+                            <span id="caseStatusBadge" class="badge px-3 py-2 rounded-pill">LOADING...</span>
+                        </div>
+                        <div class="mb-4">
+                            <label class="text-white-50 small d-block mb-1">Violation</label>
+                            <h4 class="fw-bold text-info" id="violationClassText">--</h4>
+                        </div>
+                        <div class="mb-4 d-none" id="violationCategoryContainer">
+                            <label class="text-white-50 small d-block mb-1">Category</label>
+                            <h5 class="fw-bold text-light" id="violationCategoryText">--</h5>
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-6">
+                                <label class="text-white-50 small d-block mb-1">Camera Location</label>
+                                <span class="fw-semibold text-white"><i class="bi bi-camera-video text-info"></i> GZ Building</span>
+                            </div>
+                            <div class="col-6">
+                                <label class="text-white-50 small d-block mb-1">Date Detected</label>
+                                <span class="fw-semibold text-white" id="caseTimestampText">--</span>
+                            </div>
+                        </div>
+                        <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
+                        <div class="mb-0">
+                            <label class="text-white-50 small d-block mb-1">Detected Plate</label>
+                            <h3 class="fw-bold text-white font-monospace mb-0" id="detectedPlateText">--</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Violator Info Card -->
+                <div class="card mb-4 border-0" style="background: rgba(30, 64, 175, 0.2) !important;">
+                    <div class="card-header border-0 d-flex justify-content-between align-items-center" style="background: rgba(30, 64, 175, 0.4) !important;">
+                        <h5 class="mb-0 text-white">Violator Info</h5>
+                        <span class="badge border border-white border-opacity-25 d-none" id="licenseTypeBadge">--</span>
+                    </div>
+                    <div class="card-body" id="violatorCardBody">
+                        <div class="text-center py-2 text-muted">
+                            <i class="bi bi-person-x me-1"></i> No violator information yet.<br><small>Waiting for OCR.</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Required Card (Shows only if UNVERIFIED) -->
+                <div class="card mb-4 border-0 d-none" id="actionRequiredCard" style="background: rgba(180, 83, 9, 0.1) !important;">
+                    <div class="card-header border-0" style="background: rgba(180, 83, 9, 0.4) !important;">
+                        <h5 class="mb-0 fw-bold text-white">Action Required</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Verify Form -->
+                        <form id="verifyForm">
+                            <div class="mb-3">
+                                <label for="notes" class="form-label fw-semibold text-white-50">Reviewer Notes</label>
+                                <textarea class="form-control border-0 shadow-sm" id="notes" name="notes" rows="3" required placeholder="Describe the reason..." style="background: rgba(255,255,255,0.05); color: white;"></textarea>
+                            </div>
+                            <div class="d-grid gap-2 mb-3">
+                                <button type="submit" class="btn btn-warning fw-bold text-dark py-2">
+                                    <i class="bi bi-check-lg"></i> Confirm Violation
+                                </button>
+                            </div>
+                        </form>
+                        <hr style="border-color: rgba(255, 255, 255, 0.1);">
+                        <!-- Reject Form -->
+                        <form id="rejectForm">
+                            <div class="mb-3">
+                                <label for="reject_notes" class="form-label fw-semibold text-white-50">Rejection Reason (Required)</label>
+                                <textarea class="form-control border-0 shadow-sm" id="reject_notes" name="notes" rows="2" required placeholder="Describe why this violation is being rejected..." style="background: rgba(255,255,255,0.05); color: white;"></textarea>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-danger py-2">
+                                    <i class="bi bi-x-circle"></i> Reject
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Edit Details Card -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0 text-white">Edit Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="editForm">
+                            <div class="mb-3">
+                                <label for="plate_number" class="form-label text-white-50 small">License Plate</label>
+                                <input type="text" class="form-control" id="plate_number" name="plate_number" style="text-transform: uppercase;">
+                            </div>
+                            <div class="mb-3">
+                                <label for="edit_notes" class="form-label text-white-50 small">Notes <span class="text-danger">*</span></label>
+                                <textarea class="form-control shadow-sm" id="edit_notes" name="notes" rows="3" required placeholder="Required: Explain the changes made..."></textarea>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> Save Changes
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
@@ -234,46 +298,15 @@
         </div>
     </footer>
 
-    <!-- Operation Modal -->
-    <div class="modal fade" id="actionModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content bg-dark border-secondary">
-                <div class="modal-header border-secondary text-white">
-                    <h5 class="modal-title" id="actionModalTitle">Verification</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body text-white">
-                    <form id="actionForm">
-                        <div id="editFields" class="d-none mb-3">
-                            <div class="mb-3">
-                                <label for="editPlateInput" class="form-label text-white-50 small">Corrected Plate Number</label>
-                                <input type="text" class="form-control" id="editPlateInput">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="notesInput" class="form-label text-white-50 small" id="notesLabel">Comments/Reason</label>
-                            <textarea class="form-control" id="notesInput" rows="3" required placeholder="Type notes here..."></textarea>
-                        </div>
-                        <div class="text-end">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary" id="actionSubmitBtn">Submit</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="config.js"></script>
+    <script src="main.js"></script>
     <script>
         const backendUrl = Config.getBackendUrl();
         const urlParams = new URLSearchParams(window.location.search);
         const violationId = urlParams.get('id');
-        let currentAction = 'verify'; // verify, reject, edit
 
-        // Redirect if session is not authenticated
         window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'USER';
             
@@ -296,7 +329,6 @@
             }
         });
 
-        // Fetch & Render Details
         async function loadViolationDetails() {
             try {
                 const res = await fetch(`${backendUrl}/violations/api/${violationId}`, { mode: 'cors', credentials: 'include' });
@@ -305,120 +337,186 @@
                 if (data.success) {
                     const v = data.violation;
 
-                    // Header & Info
-                    document.getElementById('caseId').textContent = v.id;
-                    document.getElementById('caseTimestamp').textContent = `Detected on: ${new Date(v.detection_timestamp).toLocaleString()}`;
-                    
-                    // Status Badge
-                    const badgeContainer = document.getElementById('caseStatusBadge');
-                    if (v.status === 'VERIFIED') {
-                        badgeContainer.className = 'badge badge-status-success';
-                        badgeContainer.textContent = 'VERIFIED';
-                        document.getElementById('actionsCard').classList.add('d-none');
-                    } else if (v.status === 'REJECTED') {
-                        badgeContainer.className = 'badge badge-status-danger';
-                        badgeContainer.textContent = 'REJECTED';
-                        document.getElementById('actionsCard').classList.add('d-none');
-                    } else {
-                        badgeContainer.className = 'badge badge-status-warning';
-                        badgeContainer.textContent = 'UNVERIFIED';
-                        document.getElementById('actionsCard').classList.remove('d-none');
-                    }
+                    // Header Info
+                    document.getElementById('headerViolationId').textContent = v.id;
 
-                    // Primary Evidence Image
-                    const primaryImg = document.getElementById('primaryEvidenceImg');
-                    const noMediaMsg = document.getElementById('noMediaMsg');
-                    if (v.evidence_snapshot) {
-                        primaryImg.src = `${backendUrl}/violation-data/${v.evidence_snapshot}`;
-                        primaryImg.classList.remove('d-none');
-                        noMediaMsg.classList.add('d-none');
-                    } else if (v.annotated_file) {
-                        primaryImg.src = `${backendUrl}/violation-data/${v.annotated_file}`;
-                        primaryImg.classList.remove('d-none');
-                        noMediaMsg.classList.add('d-none');
-                    } else {
-                        primaryImg.classList.add('d-none');
-                        noMediaMsg.classList.remove('d-none');
-                    }
+                    // Carousel Rendering
+                    const carouselInner = document.getElementById('carouselInner');
+                    carouselInner.innerHTML = '';
 
-                    // Plate Crop Image
-                    const plateImg = document.getElementById('plateCropImg');
-                    const noPlateCropMsg = document.getElementById('noPlateCropMsg');
-                    if (v.plate_crop_file) {
-                        plateImg.src = `${backendUrl}/violation-data/${v.plate_crop_file}`;
-                        plateImg.classList.remove('d-none');
-                        noPlateCropMsg.classList.add('d-none');
-                    } else {
-                        plateImg.classList.add('d-none');
-                        noPlateCropMsg.classList.remove('d-none');
-                    }
-
-                    // Video Burst Frames
-                    const burstContainer = document.getElementById('burstContainer');
-                    const noBurstMsg = document.getElementById('noBurstMsg');
-                    burstContainer.innerHTML = '';
-                    if (v.frame_images && v.frame_images.length > 0) {
-                        v.frame_images.forEach(img => {
-                            const imgElem = document.createElement('img');
-                            imgElem.src = `${backendUrl}/violation-data/${img}`;
-                            imgElem.className = 'rounded border border-secondary';
-                            imgElem.style = 'width: 80px; height: 60px; object-fit: cover; cursor: pointer;';
-                            imgElem.onclick = () => { primaryImg.src = imgElem.src; };
-                            burstContainer.appendChild(imgElem);
+                    const frames = v.frame_images || [];
+                    if (frames.length > 0) {
+                        document.getElementById('framesCountBadge').textContent = `${frames.length} frames`;
+                        document.getElementById('framesCountBadge').classList.remove('d-none');
+                        
+                        frames.forEach((frame, idx) => {
+                            const activeClass = idx === 0 ? 'active' : '';
+                            const frameUrl = `${backendUrl}/violation-data/${frame}`;
+                            carouselInner.innerHTML += `
+                                <div class="carousel-item ${activeClass}">
+                                    <img src="${frameUrl}" class="d-block mx-auto" alt="Frame ${idx+1}" style="max-height:460px;max-width:100%;object-fit:contain;">
+                                    <div class="carousel-caption d-none d-md-block" style="bottom:8px;">
+                                        <span class="badge bg-dark bg-opacity-75">Frame ${idx+1} / ${frames.length}</span>
+                                    </div>
+                                </div>
+                            `;
                         });
-                        noBurstMsg.classList.add('d-none');
+
+                        // Thumbnail strip rendering
+                        if (frames.length > 1) {
+                            document.getElementById('thumbStripContainer').classList.remove('d-none');
+                            const thumbStrip = document.getElementById('thumbStrip');
+                            thumbStrip.innerHTML = '';
+                            frames.forEach((frame, idx) => {
+                                const activeClass = idx === 0 ? 'active' : '';
+                                const dNoneClass = idx >= 8 ? 'd-none more-frames' : '';
+                                const frameUrl = `${backendUrl}/violation-data/${frame}`;
+                                thumbStrip.innerHTML += `
+                                    <img src="${frameUrl}" alt="Frame ${idx+1}" class="carousel-thumb ${dNoneClass} ${activeClass}" data-slide-to="${idx}" style="width: 70px; height: 50px; border-radius: 8px;">
+                                `;
+                            });
+                            
+                            if (frames.length > 8) {
+                                thumbStrip.innerHTML += `
+                                    <button class="btn btn-sm btn-outline-secondary rounded-3 px-3" id="toggleFrames" onclick="toggleExtraFrames()">
+                                        +${frames.length - 8} More
+                                    </button>
+                                `;
+                            }
+                            initCarouselThumbs();
+                        }
                     } else {
-                        noBurstMsg.classList.remove('d-none');
+                        // Fallback single image
+                        let imgUrl = '';
+                        let captionText = 'Detection Frame';
+                        if (v.evidence_snapshot) {
+                            imgUrl = `${backendUrl}/violation-data/${v.evidence_snapshot}`;
+                            captionText = 'Evidence Snapshot';
+                        } else if (v.annotated_file) {
+                            imgUrl = `${backendUrl}/violation-data/${v.annotated_file}`;
+                            captionText = 'Annotated Detection';
+                        }
+
+                        if (imgUrl) {
+                            carouselInner.innerHTML = `
+                                <div class="carousel-item active">
+                                    <img src="${imgUrl}" class="d-block w-100" alt="Annotated">
+                                    <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded">
+                                        <p>${captionText}</p>
+                                    </div>
+                                </div>
+                            `;
+                        } else {
+                            carouselInner.innerHTML = `<div class="carousel-item active text-center py-5 text-muted">No media files available.</div>`;
+                        }
                     }
 
-                    // AI Stats
-                    document.getElementById('violationType').textContent = v.violation_category || 'No Helmet';
-                    document.getElementById('modelConfidence').textContent = `${(v.confidence * 100).toFixed(1)}%`;
-                    document.getElementById('sourceType').textContent = v.source_type;
-                    document.getElementById('ocrPlatePrediction').textContent = v.plate_number || 'N/A';
+                    // Snapshot evidence below carousel
+                    if (v.evidence_snapshot) {
+                        document.getElementById('snapshotCropCol').classList.remove('d-none');
+                        document.getElementById('evidenceSnapshotImg').src = `${backendUrl}/violation-data/${v.evidence_snapshot}`;
+                    }
+                    const rawCrop = v.plate_crop_raw_file || v.plate_crop_file;
+                    if (rawCrop) {
+                        document.getElementById('rawCropCol').classList.remove('d-none');
+                        document.getElementById('plateCropImg').src = `${backendUrl}/violation-data/${rawCrop}`;
+                    }
+                    if (v.plate_crop_processed_file) {
+                        document.getElementById('processedCropCol').classList.remove('d-none');
+                        document.getElementById('plateCropProcessedImg').src = `${backendUrl}/violation-data/${v.plate_crop_processed_file}`;
+                    }
+
+                    // System Review Data
+                    const badge = document.getElementById('caseStatusBadge');
+                    if (v.status === 'UNVERIFIED' || v.status === 'LOGGED_ONLY') {
+                        badge.className = 'badge bg-warning text-dark px-3 py-2 rounded-pill';
+                        badge.textContent = 'PENDING';
+                        document.getElementById('actionRequiredCard').classList.remove('d-none');
+                    } else if (v.status === 'VERIFIED') {
+                        badge.className = 'badge bg-success px-3 py-2 rounded-pill';
+                        badge.textContent = 'REVIEWED';
+                        document.getElementById('actionRequiredCard').classList.add('d-none');
+                    } else if (v.status === 'REJECTED') {
+                        badge.className = 'badge bg-danger px-3 py-2 rounded-pill';
+                        badge.textContent = 'REJECTED';
+                        document.getElementById('actionRequiredCard').classList.add('d-none');
+                    } else {
+                        badge.className = 'badge bg-secondary px-3 py-2 rounded-pill text-white';
+                        badge.textContent = v.status;
+                        document.getElementById('actionRequiredCard').classList.add('d-none');
+                    }
+
+                    // Violation class text
+                    const isNoHelmet = (v.violation_class || '').toLowerCase() === 'no_helmet' || (v.violation_class || '').toLowerCase() === 'no helmet' || v.violation_class === 'invalid_helmet' || v.violation_class === 'Non-compliant';
+                    document.getElementById('violationClassText').textContent = isNoHelmet ? 'Non-Compliant' : v.violation_class;
                     
-                    // Prepopulate Edit modal input
-                    document.getElementById('editPlateInput').value = v.plate_number || '';
-
-                    // Owner Profile
-                    const ownerMatchStatus = document.getElementById('violatorMatchStatus');
-                    if (v.violator) {
-                        ownerMatchStatus.className = 'badge bg-success text-white';
-                        ownerMatchStatus.textContent = 'Linked Account';
-                        
-                        document.getElementById('ownerName').textContent = `${v.violator.first_name} ${v.violator.last_name}`;
-                        document.getElementById('ownerPlate').textContent = v.violator.plate_number;
-                        document.getElementById('ownerPhone').textContent = v.violator.phone_number || 'No contact number';
-                        document.getElementById('ownerEmail').textContent = v.violator.email || 'No email';
-                        document.getElementById('ownerAddress').textContent = v.violator.address || 'No address registered';
-                    } else {
-                        ownerMatchStatus.className = 'badge bg-warning text-dark';
-                        ownerMatchStatus.textContent = 'Unlinked (No owner match)';
-                        
-                        document.getElementById('ownerName').textContent = 'Unregistered Owner';
-                        document.getElementById('ownerPlate').textContent = v.plate_number || 'N/A';
-                        document.getElementById('ownerPhone').textContent = 'N/A';
-                        document.getElementById('ownerEmail').textContent = 'N/A';
-                        document.getElementById('ownerAddress').textContent = 'N/A';
+                    if (v.violation_category) {
+                        document.getElementById('violationCategoryContainer').classList.remove('d-none');
+                        document.getElementById('violationCategoryText').textContent = v.violation_category;
                     }
 
-                    // Audit Logs
+                    document.getElementById('caseTimestampText').textContent = new Date(v.detection_timestamp).toLocaleString();
+                    
+                    document.getElementById('detectedPlateText').innerHTML = v.plate_number ? 
+                        v.plate_number : 
+                        '<span class="text-white-50 small fw-normal italic">Plate Number Not Detected</span>';
+
+                    // Prepopulate Edit Form fields
+                    document.getElementById('plate_number').value = v.plate_number || '';
+                    document.getElementById('edit_notes').value = v.verification_notes || '';
+
+                    // Violator info card
+                    const violatorBody = document.getElementById('violatorCardBody');
+                    if (v.violator) {
+                        const lBadge = document.getElementById('licenseTypeBadge');
+                        lBadge.textContent = v.violator.license_type || 'N/A';
+                        lBadge.classList.remove('d-none');
+                        
+                        violatorBody.innerHTML = `
+                            <dl class="row mb-0">
+                                <dt class="col-sm-5 text-white-50">Name:</dt>
+                                <dd class="col-sm-7">${v.violator.first_name} ${v.violator.last_name}</dd>
+                                ${v.violator.middle_name ? `<dt class="col-sm-5 text-white-50">Middle Name:</dt><dd class="col-sm-7">${v.violator.middle_name}</dd>` : ''}
+                                <dt class="col-sm-5 text-white-50">License:</dt>
+                                <dd class="col-sm-7">${v.violator.license_type || 'N/A'}</dd>
+                                <dt class="col-sm-5 text-white-50">Plate:</dt>
+                                <dd class="col-sm-7"><strong>${v.violator.plate_number}</strong></dd>
+                                <dt class="col-sm-5 text-white-50">Phone:</dt>
+                                <dd class="col-sm-7">${v.violator.phone_number || 'N/A'}</dd>
+                                <dt class="col-sm-5 text-white-50">Email:</dt>
+                                <dd class="col-sm-7">${v.violator.email || 'N/A'}</dd>
+                                <dt class="col-sm-5 text-white-50">Joined:</dt>
+                                <dd class="col-sm-7">${new Date(v.violator.created_at).toLocaleDateString()}</dd>
+                            </dl>
+                        `;
+                    } else {
+                        document.getElementById('licenseTypeBadge').classList.add('d-none');
+                        violatorBody.innerHTML = `
+                            <div class="text-center py-2 text-muted">
+                                <i class="bi bi-person-x me-1"></i> No violator information yet.<br><small>Waiting for OCR.</small>
+                            </div>
+                        `;
+                    }
+
+                    // Render Audit logs
                     const auditLogsBody = document.getElementById('auditLogsBody');
                     auditLogsBody.innerHTML = '';
                     if (data.audit_logs && data.audit_logs.length > 0) {
                         data.audit_logs.forEach(log => {
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
-                                <td class="ps-4 text-white-50 small">${new Date(log.timestamp).toLocaleString()}</td>
-                                <td class="fw-bold">${log.user}</td>
-                                <td><span class="badge bg-secondary">${log.action}</span></td>
-                                <td class="small text-white-50">${log.old_value || 'None'} → ${log.new_value || 'None'}</td>
-                                <td>${log.notes || '--'}</td>
+                                <td class="ps-3 text-white-50 small">${new Date(log.timestamp).toLocaleString()}</td>
+                                <td>${log.user}</td>
+                                <td><span class="badge bg-info">${log.action}</span></td>
+                                <td>
+                                    ${log.old_value && log.new_value ? `${log.old_value} → ${log.new_value}` : ''}
+                                    ${log.notes ? `<br><small class="text-muted">${log.notes}</small>` : ''}
+                                </td>
                             `;
                             auditLogsBody.appendChild(tr);
                         });
                     } else {
-                        auditLogsBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No audit history recorded.</td></tr>';
+                        auditLogsBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">No audit logs yet.</td></tr>';
                     }
                 }
             } catch (err) {
@@ -426,63 +524,56 @@
             }
         }
 
-        // Action Modal
-        const actionModal = new bootstrap.Modal(document.getElementById('actionModal'));
-        function openActionModal(action) {
-            currentAction = action;
-            const title = document.getElementById('actionModalTitle');
-            const notesLabel = document.getElementById('notesLabel');
-            const editFields = document.getElementById('editFields');
-            const submitBtn = document.getElementById('actionSubmitBtn');
+        // Carousel Thumbs Interaction
+        function initCarouselThumbs() {
+            const carousel = document.getElementById('evidenceCarousel');
+            if (!carousel) return;
+            const thumbs = document.querySelectorAll('.carousel-thumb');
+            if (!thumbs.length) return;
 
-            editFields.classList.add('d-none');
-            document.getElementById('notesInput').value = '';
-
-            if (action === 'verify') {
-                title.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i> Verify Case';
-                notesLabel.textContent = 'Verification Reason/Notes (required)';
-                submitBtn.textContent = 'Confirm Verify';
-                submitBtn.className = 'btn btn-success';
-            } else if (action === 'reject') {
-                title.innerHTML = '<i class="bi bi-x-circle-fill text-danger"></i> Reject Case';
-                notesLabel.textContent = 'Rejection Reason/Notes (required)';
-                submitBtn.textContent = 'Confirm Reject';
-                submitBtn.className = 'btn btn-danger';
-            } else if (action === 'edit') {
-                title.innerHTML = '<i class="bi bi-pencil-square text-warning"></i> Edit Violation';
-                notesLabel.textContent = 'Description of edit/Correction notes (required)';
-                editFields.classList.remove('d-none');
-                submitBtn.textContent = 'Save Changes';
-                submitBtn.className = 'btn btn-warning';
+            function setActive(idx) {
+                thumbs.forEach((t, i) => {
+                    t.classList.toggle('active', i === idx);
+                });
             }
 
-            actionModal.show();
+            thumbs.forEach(t => {
+                t.addEventListener('click', () => {
+                    const idx = parseInt(t.getAttribute('data-slide-to'), 10);
+                    bootstrap.Carousel.getOrCreateInstance(carousel).to(idx);
+                    setActive(idx);
+                });
+            });
+
+            carousel.addEventListener('slid.bs.carousel', e => {
+                setActive(e.to);
+                if (thumbs[e.to]) {
+                    thumbs[e.to].scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+                }
+            });
         }
 
-        // Submit action
-        document.getElementById('actionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const notes = document.getElementById('notesInput').value;
-            const plate_number = document.getElementById('editPlateInput').value;
-            const alertBox = document.getElementById('alertBox');
+        function toggleExtraFrames() {
+            const frames = document.querySelectorAll('.more-frames');
+            const btn = document.getElementById('toggleFrames');
+            const isHidden = frames[0].classList.contains('d-none');
             
-            let url = '';
-            let bodyData = { notes };
+            frames.forEach(f => f.classList.toggle('d-none'));
+            btn.textContent = isHidden ? 'Show Less' : '+' + frames.length + ' More';
+        }
 
-            if (currentAction === 'verify') {
-                url = `${backendUrl}/violations/api/${violationId}/verify`;
-            } else if (currentAction === 'reject') {
-                url = `${backendUrl}/violations/api/${violationId}/reject`;
-            } else if (currentAction === 'edit') {
-                url = `${backendUrl}/violations/api/${violationId}/edit`;
-                bodyData.plate_number = plate_number;
-            }
+        // Form Handlers
+        // Confirm / Verify Form
+        document.getElementById('verifyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const notes = document.getElementById('notes').value;
+            const alertBox = document.getElementById('alertBox');
 
             try {
-                const res = await fetch(url, {
+                const res = await fetch(`${backendUrl}/violations/api/${violationId}/verify`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(bodyData),
+                    body: JSON.stringify({ notes }),
                     mode: 'cors',
                     credentials: 'include'
                 });
@@ -492,7 +583,75 @@
                     alertBox.textContent = data.message;
                     alertBox.className = 'alert alert-success alert-dismissible';
                     alertBox.classList.remove('d-none');
-                    actionModal.hide();
+                    loadViolationDetails();
+                } else {
+                    alertBox.textContent = data.error || 'Operation failed';
+                    alertBox.className = 'alert alert-danger alert-dismissible';
+                    alertBox.classList.remove('d-none');
+                }
+            } catch (err) {
+                console.error(err);
+                alertBox.textContent = 'Network error occurred.';
+                alertBox.className = 'alert alert-danger alert-dismissible';
+                alertBox.classList.remove('d-none');
+            }
+        });
+
+        // Reject Form
+        document.getElementById('rejectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const notes = document.getElementById('reject_notes').value;
+            const alertBox = document.getElementById('alertBox');
+
+            try {
+                const res = await fetch(`${backendUrl}/violations/api/${violationId}/reject`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notes }),
+                    mode: 'cors',
+                    credentials: 'include'
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    alertBox.textContent = data.message;
+                    alertBox.className = 'alert alert-success alert-dismissible';
+                    alertBox.classList.remove('d-none');
+                    loadViolationDetails();
+                } else {
+                    alertBox.textContent = data.error || 'Operation failed';
+                    alertBox.className = 'alert alert-danger alert-dismissible';
+                    alertBox.classList.remove('d-none');
+                }
+            } catch (err) {
+                console.error(err);
+                alertBox.textContent = 'Network error occurred.';
+                alertBox.className = 'alert alert-danger alert-dismissible';
+                alertBox.classList.remove('d-none');
+            }
+        });
+
+        // Edit Form
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const plate_number = document.getElementById('plate_number').value;
+            const notes = document.getElementById('edit_notes').value;
+            const alertBox = document.getElementById('alertBox');
+
+            try {
+                const res = await fetch(`${backendUrl}/violations/api/${violationId}/edit`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plate_number, notes }),
+                    mode: 'cors',
+                    credentials: 'include'
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    alertBox.textContent = data.message;
+                    alertBox.className = 'alert alert-success alert-dismissible';
+                    alertBox.classList.remove('d-none');
                     loadViolationDetails();
                 } else {
                     alertBox.textContent = data.error || 'Operation failed';
