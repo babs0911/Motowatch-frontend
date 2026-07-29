@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Violations - MotoWatch</title>
+    <title>Notifications - MotoWatch</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -58,7 +58,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-3 active text-white fw-bold" href="violations.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <a class="nav-link px-3 text-white-50" href="violations.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
                             <i class="bi bi-exclamation-triangle"></i> Violations
                         </a>
                     </li>
@@ -68,7 +68,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-3 text-white-50" href="alerts.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <a class="nav-link px-3 active text-white fw-bold" href="alerts.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
                             <i class="bi bi-bell"></i> Notifications
                         </a>
                     </li>
@@ -112,27 +112,27 @@
     <!-- Main Content -->
     <main class="container my-4 flex-grow-1" style="position: relative;">
         <h1 class="mb-4 fw-bold" style="font-family: 'Montserrat', sans-serif; letter-spacing: 1px;">
-            <i class="bi bi-exclamation-triangle"></i> Violations
+            <i class="bi bi-bell"></i> Notification Log
         </h1>
 
-        <!-- Filter & Search -->
+        <!-- Filter Form -->
         <div class="card mb-4 border-0">
             <div class="card-body">
-                <form id="filterForm" class="row g-3 align-items-end">
+                <form id="filterForm" class="row g-3 align-items-end" onsubmit="applyFilters(event)">
                     <div class="col-md-4">
-                        <label for="q" class="form-label text-white-50 small">Search ID or Plate</label>
-                        <div class="input-group">
-                            <span class="input-group-text bg-transparent border-end-0 text-white-50" style="border-color: rgba(255,255,255,0.1);"><i class="bi bi-search"></i></span>
-                            <input type="text" class="form-control border-start-0" id="q" placeholder="Search..." style="border-color: rgba(255,255,255,0.1);">
-                        </div>
+                        <label for="statusFilter" class="form-label text-white-50 small">Filter by Status</label>
+                        <select class="form-select" id="statusFilter">
+                            <option value="ALL">All Statuses</option>
+                            <option value="SUCCESS">Success</option>
+                            <option value="FAILED">Failed</option>
+                        </select>
                     </div>
                     <div class="col-md-4">
-                        <label for="status" class="form-label text-white-50 small">Filter by Status</label>
-                        <select class="form-select" id="status" style="border-color: rgba(255,255,255,0.1);">
-                            <option value="ALL">All Statuses</option>
-                            <option value="UNVERIFIED">Pending Verification</option>
-                            <option value="VERIFIED">Verified</option>
-                            <option value="REJECTED">Rejected</option>
+                        <label for="typeFilter" class="form-label text-white-50 small">Filter by Type</label>
+                        <select class="form-select" id="typeFilter">
+                            <option value="ALL">All Types</option>
+                            <option value="SMS">SMS</option>
+                            <option value="EMAIL">Email</option>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -145,46 +145,27 @@
             </div>
         </div>
 
-        <!-- Tabs Selection -->
-        <div class="d-flex mb-3">
-            <ul class="nav nav-pills" id="violationTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active fw-semibold px-4 py-2 me-2" id="normalTab" onclick="switchTab('normal')" style="border-radius: 10px; font-size: 0.9rem;">
-                        <i class="bi bi-shield-check me-2"></i> Violations
-                        <span class="badge bg-light text-dark ms-2" id="normalCount">0</span>
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-semibold px-4 py-2" id="flaggedTab" onclick="switchTab('flagged')" style="border-radius: 10px; font-size: 0.9rem;">
-                        <i class="bi bi-flag me-2"></i> Flagged Violations
-                        <span class="badge bg-danger ms-2" id="flaggedCount">0</span>
-                    </button>
-                </li>
-            </ul>
-        </div>
-
-        <!-- Violations Table -->
+        <!-- Logs Table -->
         <div class="card border-0 rounded-4 overflow-hidden mb-4">
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light bg-opacity-50">
+                        <thead>
                             <tr>
                                 <th class="ps-4">ID</th>
-                                <th>Preview</th>
-                                <th>Date Detected</th>
-                                <th>Violation Type</th>
-                                <th>License Plate</th>
-                                <th>Source</th>
+                                <th>Violation</th>
+                                <th>Type</th>
+                                <th>Recipient</th>
+                                <th>Date Sent</th>
                                 <th>Status</th>
-                                <th class="text-center">Action</th>
+                                <th>Details</th>
                             </tr>
                         </thead>
-                        <tbody id="violationsTableBody">
+                        <tbody id="logsTableBody">
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-5">
+                                <td colspan="7" class="text-center text-muted py-5">
                                     <div class="spinner-border text-primary" role="status"></div>
-                                    <div class="mt-2">Loading violations...</div>
+                                    <div class="mt-2">Loading logs...</div>
                                 </td>
                             </tr>
                         </tbody>
@@ -209,37 +190,19 @@
         </div>
     </footer>
 
-    <!-- Gallery Preview Modal -->
-    <div class="modal fade" id="galleryModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content bg-dark border-secondary">
-                <div class="modal-header border-secondary text-white">
-                    <h5 class="modal-title">Evidence Media Viewer</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body text-center p-0 bg-black">
-                    <img id="modalPreviewImg" src="" class="img-fluid" style="max-height: 70vh;">
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="config.js"></script>
     <script>
         const backendUrl = Config.getBackendUrl();
-        let currentTab = 'normal';
         let currentPage = 1;
 
-        // Redirect if session is not authenticated
         window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'USER';
             
             const role = localStorage.getItem('user_role');
             if (role === 'Admin') {
-                const settingsDropdown = document.getElementById('adminSettingsDropdown');
-                if (settingsDropdown) settingsDropdown.classList.remove('d-none');
+                document.getElementById('adminSettingsDropdown').classList.remove('d-none');
             }
 
             try {
@@ -248,7 +211,7 @@
                 if (!data.authenticated) {
                     window.location.href = 'login.html';
                 } else {
-                    loadViolations();
+                    loadLogs();
                 }
             } catch (err) {
                 console.error(err);
@@ -256,162 +219,93 @@
             }
         });
 
-        // Form Submit
-        document.getElementById('filterForm').addEventListener('submit', (e) => {
+        function applyFilters(e) {
             e.preventDefault();
             currentPage = 1;
-            loadViolations();
-        });
+            loadLogs();
+        }
 
         function clearFilters() {
-            document.getElementById('q').value = '';
-            document.getElementById('status').value = 'ALL';
+            document.getElementById('statusFilter').value = 'ALL';
+            document.getElementById('typeFilter').value = 'ALL';
             currentPage = 1;
-            loadViolations();
+            loadLogs();
         }
 
-        function switchTab(tabName) {
-            currentTab = tabName;
-            document.getElementById('normalTab').classList.toggle('active', tabName === 'normal');
-            document.getElementById('flaggedTab').classList.toggle('active', tabName === 'flagged');
-            currentPage = 1;
-            loadViolations();
-        }
+        async function loadLogs() {
+            const status = document.getElementById('statusFilter').value;
+            const type = document.getElementById('typeFilter').value;
+            const tbody = document.getElementById('logsTableBody');
 
-        async function loadViolations() {
-            const query = document.getElementById('q').value;
-            const status = document.getElementById('status').value;
-            
-            const tbody = document.getElementById('violationsTableBody');
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="8" class="text-center text-muted py-5">
+                    <td colspan="7" class="text-center text-muted py-5">
                         <div class="spinner-border text-primary" role="status"></div>
-                        <div class="mt-2">Fetching records...</div>
+                        <div class="mt-2">Loading logs...</div>
                     </td>
                 </tr>
             `;
 
             try {
-                const url = new URL(`${backendUrl}/violations/api/list`);
-                url.searchParams.append('tab', currentTab);
+                const url = new URL(`${backendUrl}/notifications/api/list`);
                 url.searchParams.append('page', currentPage);
-                if (query) url.searchParams.append('q', query);
                 if (status !== 'ALL') url.searchParams.append('status', status);
+                if (type !== 'ALL') url.searchParams.append('type', type);
 
                 const res = await fetch(url.toString(), { mode: 'cors', credentials: 'include' });
                 const data = await res.json();
 
                 if (data.success) {
-                    // Update counts
-                    document.getElementById('normalCount').textContent = data.normal_count;
-                    document.getElementById('flaggedCount').textContent = data.flagged_count;
-
-                    // Render Table
                     tbody.innerHTML = '';
-                    if (data.violations.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-5">No violations found matching filters.</td></tr>';
+                    if (data.logs.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No notification logs found.</td></tr>';
                         document.getElementById('paginationContainer').innerHTML = '';
                         return;
                     }
 
-                    data.violations.forEach(v => {
+                    data.logs.forEach(log => {
                         let statusBadge = '';
-                        if (v.status === 'UNVERIFIED' || v.status === 'LOGGED_ONLY') statusBadge = '<span class="badge badge-status-warning px-3 shadow-sm">UNVERIFIED</span>';
-                        else if (v.status === 'VERIFIED') statusBadge = '<span class="badge badge-status-success px-3 shadow-sm">VERIFIED</span>';
-                        else if (v.status === 'REJECTED') statusBadge = '<span class="badge badge-status-danger px-3 shadow-sm">REJECTED</span>';
-                        else statusBadge = `<span class="badge badge-status-info px-3 shadow-sm">${v.status}</span>`;
+                        if (log.status === 'SUCCESS') statusBadge = '<span class="badge bg-success">SUCCESS</span>';
+                        else if (log.status === 'FAILED') statusBadge = '<span class="badge bg-danger">FAILED</span>';
+                        else statusBadge = `<span class="badge bg-secondary">${log.status}</span>`;
 
-                        const formattedDate = new Date(v.detection_timestamp).toLocaleString();
-                        
-                        // Decide preview image URL
-                        let previewUrl = '';
-                        if (v.evidence_snapshot) {
-                            previewUrl = `${backendUrl}/violation-data/${v.evidence_snapshot}`;
-                        } else if (v.annotated_file) {
-                            previewUrl = `${backendUrl}/violation-data/${v.annotated_file}`;
-                        } else if (v.frame_images && v.frame_images.length > 0) {
-                            previewUrl = `${backendUrl}/violation-data/${v.frame_images[0]}`;
-                        }
+                        let typeBadge = '';
+                        if (log.notification_type === 'SMS') typeBadge = '<span class="badge bg-info">SMS</span>';
+                        else if (log.notification_type === 'EMAIL') typeBadge = '<span class="badge bg-primary">EMAIL</span>';
+                        else typeBadge = `<span class="badge bg-secondary">${log.notification_type}</span>`;
 
-                        let frameCountBadge = '';
-                        if (v.frame_images && v.frame_images.length > 0) {
-                            frameCountBadge = `
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary shadow" style="font-size:0.6rem; z-index: 1;">
-                                    ${v.frame_images.length}
-                                </span>
-                            `;
-                        }
-
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td class="ps-4 fw-semibold text-white-50">#${v.id}</td>
-                            <td>
-                                <div class="position-relative d-inline-block">
-                                    ${previewUrl ? `
-                                        <img src="${previewUrl}" alt="Preview" class="img-thumbnail shadow-sm" style="width:80px;height:56px;object-fit:cover;border-radius:10px;cursor:pointer; transition: transform 0.2s;" onclick="openPreview('${previewUrl}', ${JSON.stringify(v.frame_images || [])})">
-                                    ` : `
-                                        <div style="width:80px;height:56px;background:#f8f9fa;border-radius:10px;border:1px solid #dee2e6;display:flex;align-items:center;justify-content:center;">
-                                            <i class="bi bi-image text-muted"></i>
-                                        </div>
-                                    `}
-                                    ${frameCountBadge}
-                                </div>
-                            </td>
-                            <td>${formattedDate}</td>
-                            <td>
-                                <span class="badge badge-type-danger px-3 shadow-sm">
-                                    ${(v.violation_class || '').toLowerCase() === 'no_helmet' || (v.violation_class || '').toLowerCase() === 'no helmet' || v.violation_class === 'invalid_helmet' || v.violation_class === 'Non-compliant' ? 'Non-Compliant' : v.violation_class}
-                                </span>
-                            </td>
-                            <td>
-                                ${v.plate_number ? `<strong class="font-monospace text-white">${v.plate_number}</strong>` : '<span class="text-white-50 small italic">Not Detected</span>'}
-                            </td>
-                            <td>
-                                <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 border border-info border-opacity-25 shadow-sm">
-                                    <i class="bi bi-geo-alt-fill"></i> GZ Building
-                                </span>
-                            </td>
-                            <td>${statusBadge}</td>
-                            <td class="text-center pe-4">
-                                <a href="violation-detail.html?id=${v.id}" class="btn btn-sm btn-outline-primary rounded-circle p-2 d-inline-flex align-items-center justify-content-center shadow-sm" style="width: 36px; height: 36px;" title="View Details">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                            </td>
+                        tbody.innerHTML += `
+                            <tr>
+                                <td class="ps-4 fw-semibold text-white-50">#${log.id}</td>
+                                <td><a href="violation-detail.html?id=${log.violation_id}" class="text-info fw-bold">Case #${log.violation_id}</a></td>
+                                <td>${typeBadge}</td>
+                                <td>${log.recipient}</td>
+                                <td>${new Date(log.sent_at).toLocaleString()}</td>
+                                <td>${statusBadge}</td>
+                                <td class="small text-white-50">${log.error_message || '--'}</td>
+                            </tr>
                         `;
-                        tbody.appendChild(tr);
                     });
 
-                    // Render Pagination
                     renderPagination(data.pages, data.current_page);
                 }
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-5">Error connecting to server. Please verify the backend is running.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Error loading data from server.</td></tr>';
             }
         }
 
-        // Preview helper
-        const galleryModal = new bootstrap.Modal(document.getElementById('galleryModal'));
-        function openPreview(imgUrl) {
-            document.getElementById('modalPreviewImg').src = imgUrl;
-            galleryModal.show();
-        }
-
-        // Render pagination buttons
         function renderPagination(totalPages, currentPageNum) {
             const container = document.getElementById('paginationContainer');
             container.innerHTML = '';
 
             if (totalPages <= 1) return;
 
-            // Previous Button
             const prevLi = document.createElement('li');
             prevLi.className = `page-item ${currentPageNum === 1 ? 'disabled' : ''}`;
             prevLi.innerHTML = `<button class="page-link" onclick="changePage(${currentPageNum - 1})"><i class="bi bi-chevron-left"></i></button>`;
             container.appendChild(prevLi);
 
-            // Page numbers
             for (let i = 1; i <= totalPages; i++) {
                 const pageLi = document.createElement('li');
                 pageLi.className = `page-item ${i === currentPageNum ? 'active' : ''}`;
@@ -419,7 +313,6 @@
                 container.appendChild(pageLi);
             }
 
-            // Next Button
             const nextLi = document.createElement('li');
             nextLi.className = `page-item ${currentPageNum === totalPages ? 'disabled' : ''}`;
             nextLi.innerHTML = `<button class="page-link" onclick="changePage(${currentPageNum + 1})"><i class="bi bi-chevron-right"></i></button>`;
@@ -428,10 +321,9 @@
 
         function changePage(pageIndex) {
             currentPage = pageIndex;
-            loadViolations();
+            loadLogs();
         }
 
-        // Handle Logout
         async function handleLogout() {
             try {
                 await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });

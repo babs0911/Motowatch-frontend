@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - MotoWatch</title>
+    <title>Upload Media - MotoWatch</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -12,6 +12,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <!-- Custom Style -->
     <link rel="stylesheet" href="style.css">
+    <style>
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+    </style>
 </head>
 <body class="d-flex flex-column min-vh-100">
     <div class="screen-overlay"></div>
@@ -33,7 +47,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-3 active text-white fw-bold" href="dashboard.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <a class="nav-link px-3 text-white-50" href="dashboard.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
                             <i class="bi bi-speedometer2"></i> Dashboard
                         </a>
                     </li>
@@ -60,7 +74,7 @@
                             <li><a class="dropdown-item py-2" href="live-stream.html"><i class="bi bi-camera-video me-2"></i> Livestream</a></li>
                             <li><a class="dropdown-item py-2" href="ocr-test.html"><i class="bi bi-cpu me-2"></i> OCR Test</a></li>
                             <li><hr class="dropdown-divider border-secondary"></li>
-                            <li><a class="dropdown-item py-2" href="upload.html"><i class="bi bi-image me-2"></i> Upload Image/Video</a></li>
+                            <li><a class="dropdown-item py-2 active text-white" href="upload.html"><i class="bi bi-image me-2"></i> Upload Image/Video</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown px-2 d-none" id="adminSettingsDropdown">
@@ -92,93 +106,48 @@
     <!-- Main Content -->
     <main class="container my-4 flex-grow-1" style="position: relative;">
         <h1 class="mb-4" style="font-family: 'Montserrat', sans-serif; font-weight: 800; letter-spacing: 1px;">
-            <i class="bi bi-speedometer2"></i> Dashboard
+            <i class="bi bi-cloud-arrow-up"></i> Upload Media File
         </h1>
 
-        <!-- Quick Stats -->
-        <div class="row mb-4 g-3">
-            <div class="col-md-3">
-                <div class="card border-0 h-100" style="background: rgba(30, 64, 175, 0.4) !important; margin-bottom: 0;">
-                    <div class="card-body">
-                        <h5 class="card-title text-white-50" style="font-size: 0.8rem; text-transform: uppercase;">Total Violations</h5>
-                        <h2 class="mb-0 fw-bold" id="totalViolations">0</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-0 h-100" style="background: rgba(180, 83, 9, 0.4) !important; margin-bottom: 0;">
-                    <div class="card-body">
-                        <h5 class="card-title text-white-50" style="font-size: 0.8rem; text-transform: uppercase;">Pending Verification</h5>
-                        <h2 class="mb-0 fw-bold" id="pendingVerification">0</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-0 h-100" style="background: rgba(21, 128, 61, 0.4) !important; margin-bottom: 0;">
-                    <div class="card-body">
-                        <h5 class="card-title text-white-50" style="font-size: 0.8rem; text-transform: uppercase;">Verified</h5>
-                        <h2 class="mb-0 fw-bold" id="verifiedCount">0</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-0 h-100" style="background: rgba(185, 28, 28, 0.4) !important; margin-bottom: 0;">
-                    <div class="card-body">
-                        <h5 class="card-title text-white-50" style="font-size: 0.8rem; text-transform: uppercase;">Rejected</h5>
-                        <h2 class="mb-0 fw-bold" id="rejectedCount">0</h2>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="row mb-4">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title mb-3 text-white">Quick Actions</h5>
-                        <div class="btn-group" role="group">
-                            <a href="violations.html" class="btn btn-outline-warning">
-                                <i class="bi bi-exclamation-triangle"></i> Review Pending
-                            </a>
-                            <a href="live-stream.html" class="btn btn-outline-info">
-                                <i class="bi bi-camera-video"></i> View Livestream
-                            </a>
+        <div class="row g-4 justify-content-center">
+            <!-- Image Upload Card -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header"><i class="bi bi-image"></i> Process Image</div>
+                    <div class="card-body p-4 text-center">
+                        <p class="text-white-50 small mb-4">Supported formats: JPG, PNG. Max file size: 10MB.</p>
+                        
+                        <div class="upload-area mb-4" onclick="triggerInput('image')">
+                            <i class="bi bi-images fs-1 text-primary mb-2 d-block"></i>
+                            <span class="fw-bold">Select Image File</span>
+                            <span class="text-white-50 d-block small mt-1" id="imageFileName">No file selected</span>
                         </div>
+                        
+                        <input type="file" id="imageInput" accept=".jpg,.jpeg,.png" class="d-none" onchange="fileSelected('image')">
+                        <button class="btn btn-primary w-100" id="imageSubmitBtn" onclick="uploadFile('image')" disabled>
+                            <i class="bi bi-cpu"></i> Analyze Image
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Recent Violations -->
-        <div class="row">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-transparent">
-                        <h5 class="mb-0 text-white">Recent Violations</h5>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Time</th>
-                                        <th>Type</th>
-                                        <th>Plate</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="recentViolationsTable">
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted py-4">
-                                            <div class="spinner-border spinner-border-sm" role="status"></div> Loading recent violations...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+            <!-- Video Upload Card -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header"><i class="bi bi-film"></i> Process Video</div>
+                    <div class="card-body p-4 text-center">
+                        <p class="text-white-50 small mb-4">Supported formats: MP4, AVI, MOV. Max file size: 100MB.</p>
+                        
+                        <div class="upload-area mb-4" onclick="triggerInput('video')">
+                            <i class="bi bi-camera-reels fs-1 text-info mb-2 d-block"></i>
+                            <span class="fw-bold">Select Video File</span>
+                            <span class="text-white-50 d-block small mt-1" id="videoFileName">No file selected</span>
                         </div>
+                        
+                        <input type="file" id="videoInput" accept=".mp4,.avi,.mov" class="d-none" onchange="fileSelected('video')">
+                        <button class="btn btn-info text-white w-100" id="videoSubmitBtn" onclick="uploadFile('video')" disabled>
+                            <i class="bi bi-cpu"></i> Analyze Video
+                        </button>
                     </div>
                 </div>
             </div>
@@ -195,20 +164,42 @@
         </div>
     </footer>
 
+    <!-- Result Modal -->
+    <div class="modal fade" id="resultModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content bg-dark border-secondary text-white">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title fw-bold" id="modalTitle">Analysis Results</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-0 bg-black">
+                    <img id="modalResultImg" src="" class="img-fluid border border-secondary" style="max-height: 60vh;">
+                    <div class="p-3 bg-dark border-top border-secondary text-start" id="modalMetadata">
+                        <p class="mb-0 fw-bold" id="modalMessage"></p>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <a href="violations.html" class="btn btn-primary d-none" id="modalViewLogsBtn">View Violations List</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="config.js"></script>
+    <script src="main.js"></script>
     <script>
         const backendUrl = Config.getBackendUrl();
+        const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
 
-        // Redirect if session is not authenticated
         window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'USER';
             
             const role = localStorage.getItem('user_role');
             if (role === 'Admin') {
-                const settingsDropdown = document.getElementById('adminSettingsDropdown');
-                if (settingsDropdown) settingsDropdown.classList.remove('d-none');
+                document.getElementById('adminSettingsDropdown').classList.remove('d-none');
             }
 
             try {
@@ -216,9 +207,6 @@
                 const data = await res.json();
                 if (!data.authenticated) {
                     window.location.href = 'login.html';
-                } else {
-                    loadStats();
-                    loadRecentViolations();
                 }
             } catch (err) {
                 console.error(err);
@@ -226,72 +214,79 @@
             }
         });
 
-        // Load statistics
-        async function loadStats() {
-            try {
-                const res = await fetch(`${backendUrl}/api/stats`, { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
-                if (data.success) {
-                    document.getElementById('totalViolations').textContent = data.total_violations;
-                    document.getElementById('pendingVerification').textContent = data.pending_verification;
-                    document.getElementById('verifiedCount').textContent = data.verified_count;
-                    document.getElementById('rejectedCount').textContent = data.rejected_count;
-                }
-            } catch (err) {
-                console.error('Error fetching stats:', err);
+        function triggerInput(type) {
+            document.getElementById(`${type}Input`).click();
+        }
+
+        function fileSelected(type) {
+            const input = document.getElementById(`${type}Input`);
+            const fileNameSpan = document.getElementById(`${type}FileName`);
+            const submitBtn = document.getElementById(`${type}SubmitBtn`);
+            
+            if (input.files.length > 0) {
+                fileNameSpan.textContent = input.files[0].name;
+                submitBtn.disabled = false;
+            } else {
+                fileNameSpan.textContent = 'No file selected';
+                submitBtn.disabled = true;
             }
         }
 
-        // Load recent violations
-        async function loadRecentViolations() {
+        async function uploadFile(type) {
+            const input = document.getElementById(`${type}Input`);
+            const submitBtn = document.getElementById(`${type}SubmitBtn`);
+            const file = input.files[0];
+            
+            if (!file) return;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Processing...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
             try {
-                const res = await fetch(`${backendUrl}/violations/api/list?per_page=10`, { mode: 'cors', credentials: 'include' });
+                const res = await fetch(`${backendUrl}/upload/api/${type}`, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'cors',
+                    credentials: 'include'
+                });
+                
                 const data = await res.json();
                 
                 if (data.success) {
-                    const tbody = document.getElementById('recentViolationsTable');
-                    tbody.innerHTML = '';
+                    document.getElementById('modalTitle').textContent = type === 'image' ? 'Image Analysis Results' : 'Video Analysis Results';
+                    document.getElementById('modalMessage').textContent = data.message;
                     
-                    if (data.violations.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No violations detected yet.</td></tr>';
-                        return;
+                    const resultImg = document.getElementById('modalResultImg');
+                    if (data.annotated_path) {
+                        resultImg.src = `${backendUrl}/violation-data/${data.annotated_path}`;
+                        resultImg.classList.remove('d-none');
+                    } else {
+                        resultImg.classList.add('d-none');
                     }
-                    
-                    data.violations.forEach(v => {
-                        let statusBadge = '';
-                        if (v.status === 'UNVERIFIED') statusBadge = '<span class="badge badge-status-warning">UNVERIFIED</span>';
-                        else if (v.status === 'VERIFIED') statusBadge = '<span class="badge badge-status-success">VERIFIED</span>';
-                        else if (v.status === 'REJECTED') statusBadge = '<span class="badge badge-status-danger">REJECTED</span>';
-                        else statusBadge = `<span class="badge badge-status-info">${v.status}</span>`;
 
-                        const formattedDate = new Date(v.detection_timestamp).toLocaleString();
-                        
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${v.id}</td>
-                            <td>${formattedDate}</td>
-                            <td>
-                                <span class="badge badge-type-danger">
-                                    ${v.violation_class === 'Non-compliant' || v.violation_class === 'invalid_helmet' ? 'Non-compliant' : v.violation_class}
-                                </span>
-                            </td>
-                            <td>${v.plate_number || 'N/A'}</td>
-                            <td>${statusBadge}</td>
-                            <td>
-                                <a href="violation-detail.html?id=${v.id}" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-eye"></i> View
-                                </a>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
+                    const logsBtn = document.getElementById('modalViewLogsBtn');
+                    if (data.has_violation) {
+                        logsBtn.classList.remove('d-none');
+                    } else {
+                        logsBtn.classList.add('d-none');
+                    }
+
+                    resultModal.show();
+                } else {
+                    alert(`Error: ${data.message}`);
                 }
             } catch (err) {
-                console.error('Error loading recent violations:', err);
+                console.error(err);
+                alert('An error occurred during file upload. Please verify connection.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = type === 'image' ? '<i class="bi bi-cpu"></i> Analyze Image' : '<i class="bi bi-cpu"></i> Analyze Video';
             }
         }
 
-        // Handle Logout
         async function handleLogout() {
             try {
                 await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });

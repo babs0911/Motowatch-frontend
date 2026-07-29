@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Test - MotoWatch</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .dropzone {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            text-align: center;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+        .dropzone:hover {
+            border-color: #3b82f6;
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div class="screen-overlay"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg border-bottom" style="background: rgba(13, 27, 42, 0.95); backdrop-filter: blur(10px); border-color: rgba(255,255,255,0.05) !important;">
+        <div class="container-fluid px-4 px-lg-5">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="portal.html" style="font-family: 'Montserrat', sans-serif; letter-spacing: 1px; color: #ffffff;">
+                <img src="img/logo.png" alt="Logo" style="height: 45px; margin-right: 15px;"> MOTOWATCH
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" style="border-color: rgba(255,255,255,0.1);">
+                <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link px-3 text-white-50" href="portal.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-house-door"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 text-white-50" href="dashboard.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 text-white-50" href="violations.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-exclamation-triangle"></i> Violations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 text-white-50" href="reports.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-graph-up"></i> Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 text-white-50" href="alerts.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-bell"></i> Notifications
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown px-2">
+                        <a class="nav-link dropdown-toggle text-white-50" href="#" role="button" data-bs-toggle="dropdown" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-tools"></i> Tools
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark border-secondary shadow-lg">
+                            <li><a class="dropdown-item py-2" href="live-stream.html"><i class="bi bi-camera-video me-2"></i> Livestream</a></li>
+                            <li><a class="dropdown-item py-2 active text-white" href="ocr-test.html"><i class="bi bi-cpu me-2"></i> OCR Test</a></li>
+                            <li><hr class="dropdown-divider border-secondary"></li>
+                            <li><a class="dropdown-item py-2" href="upload.html"><i class="bi bi-image me-2"></i> Upload Image/Video</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown px-2 d-none" id="adminSettingsDropdown">
+                        <a class="nav-link dropdown-toggle text-white-50" href="#" role="button" data-bs-toggle="dropdown" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-gear-fill"></i> Settings
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark border-secondary shadow-lg">
+                            <li><a class="dropdown-item py-2" href="users.html"><i class="bi bi-people me-2"></i> User Management</a></li>
+                            <li><a class="dropdown-item py-2" href="system-logs.html"><i class="bi bi-list-columns-reverse me-2"></i> System Logs</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white fw-bold" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i> <span id="usernameDisplay">USER</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark border-secondary shadow-lg">
+                            <li><a class="dropdown-item text-danger py-2" href="#" onclick="handleLogout()">
+                                <i class="bi bi-box-arrow-right me-2"></i> LOGOUT
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container my-4 flex-grow-1" style="position: relative;">
+        <h1 class="mb-4 fw-bold" style="font-family: 'Montserrat', sans-serif; letter-spacing: 1px;">
+            <i class="bi bi-cpu"></i> Standalone OCR Engine Test
+        </h1>
+
+        <div class="row g-4">
+            <!-- Upload Column -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header"><i class="bi bi-upload"></i> Upload Test Image(s)</div>
+                    <div class="card-body p-4 text-center">
+                        <p class="text-white-50 small mb-4">Select a single crop or multiple burst frame image files to evaluate plate accuracy.</p>
+                        
+                        <div class="dropzone mb-4" onclick="triggerFileInput()">
+                            <i class="bi bi-file-earmark-image fs-1 text-primary mb-2 d-block"></i>
+                            <span class="fw-bold">Drag files here or click to select</span>
+                            <span class="text-white-50 d-block small mt-1" id="fileCountText">No files selected</span>
+                        </div>
+                        
+                        <input type="file" id="fileInput" multiple accept="image/*" class="d-none" onchange="filesSelected()">
+                        <button class="btn btn-primary w-100" id="submitBtn" onclick="runOcrTest()" disabled>
+                            <i class="bi bi-play-fill"></i> Run OCR Engine
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Column -->
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-header"><i class="bi bi-clipboard-data"></i> OCR Engine Outputs</div>
+                    <div class="card-body p-4" id="resultsBody">
+                        <div class="text-center py-5 text-muted">
+                            <i class="bi bi-cpu fs-2 mb-2 d-block"></i>
+                            Run a test to see the engine evaluation results here.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-4" style="background: rgba(13, 27, 42, 0.95); border-top: 1px solid rgba(255,255,255,0.05);">
+        <div class="container text-center">
+            <span style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong>Note:</strong> MotoWatch is for monitoring and violation detection — not primary enforcement.
+            </span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="config.js"></script>
+    <script>
+        const backendUrl = Config.getBackendUrl();
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'USER';
+            
+            const role = localStorage.getItem('user_role');
+            if (role === 'Admin') {
+                document.getElementById('adminSettingsDropdown').classList.remove('d-none');
+            }
+
+            try {
+                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors', credentials: 'include' });
+                const data = await res.json();
+                if (!data.authenticated) {
+                    window.location.href = 'login.html';
+                }
+            } catch (err) {
+                console.error(err);
+                window.location.href = 'login.html';
+            }
+        });
+
+        function triggerFileInput() {
+            document.getElementById('fileInput').click();
+        }
+
+        function filesSelected() {
+            const input = document.getElementById('fileInput');
+            const fileCountText = document.getElementById('fileCountText');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (input.files.length > 0) {
+                fileCountText.textContent = `${input.files.length} file(s) selected`;
+                submitBtn.disabled = false;
+            } else {
+                fileCountText.textContent = 'No files selected';
+                submitBtn.disabled = true;
+            }
+        }
+
+        async function runOcrTest() {
+            const input = document.getElementById('fileInput');
+            const submitBtn = document.getElementById('submitBtn');
+            const resultsBody = document.getElementById('resultsBody');
+            
+            if (input.files.length === 0) return;
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> OCR Processing...';
+            resultsBody.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <div class="mt-2 text-white-50">Evaluating candidate frames...</div>
+                </div>
+            `;
+
+            const formData = new FormData();
+            for (let i = 0; i < input.files.length; i++) {
+                formData.append('file', input.files[i]);
+            }
+
+            try {
+                const res = await fetch(`${backendUrl}/ocr-test/api/upload`, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'cors',
+                    credentials: 'include'
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    resultsBody.innerHTML = `
+                        <div class="alert alert-success py-2"><i class="bi bi-check-circle-fill"></i> OCR Test Completed Successfully</div>
+                        <dl class="row mt-3">
+                            <dt class="col-sm-6 text-white-50">Predicted Plate:</dt>
+                            <dd class="col-sm-6"><h3 class="fw-bold font-monospace text-warning">${data.plate_number || 'N/A'}</h3></dd>
+                            
+                            <dt class="col-sm-6 text-white-50">Confidence Score:</dt>
+                            <dd class="col-sm-6"><strong>${data.confidence_percent || 0}%</strong></dd>
+
+                            <dt class="col-sm-6 text-white-50">Processed Frames:</dt>
+                            <dd class="col-sm-6">${data.processed_frames || 1}</dd>
+
+                            <dt class="col-sm-6 text-white-50">Candidates Evaluated:</dt>
+                            <dd class="col-sm-6">${data.candidates_evaluated || 0}</dd>
+                        </dl>
+                    `;
+                } else {
+                    resultsBody.innerHTML = `<div class="alert alert-danger"><i class="bi bi-x-circle-fill"></i> Error: ${data.message || 'OCR Engine failed'}</div>`;
+                }
+            } catch (err) {
+                console.error(err);
+                resultsBody.innerHTML = '<div class="alert alert-danger"><i class="bi bi-exclamation-triangle-fill"></i> Network connection error.</div>';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-play-fill"></i> Run OCR Engine';
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
+            } catch (err) {
+                console.error(err);
+            }
+            localStorage.removeItem('user_name');
+            localStorage.removeItem('user_role');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

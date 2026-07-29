@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - MotoWatch</title>
+    <title>Reports - MotoWatch</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -33,7 +33,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-3 active text-white fw-bold" href="dashboard.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <a class="nav-link px-3 text-white-50" href="dashboard.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
                             <i class="bi bi-speedometer2"></i> Dashboard
                         </a>
                     </li>
@@ -43,7 +43,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link px-3 text-white-50" href="reports.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                        <a class="nav-link px-3 active text-white fw-bold" href="reports.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
                             <i class="bi bi-graph-up"></i> Reports
                         </a>
                     </li>
@@ -91,94 +91,111 @@
 
     <!-- Main Content -->
     <main class="container my-4 flex-grow-1" style="position: relative;">
-        <h1 class="mb-4" style="font-family: 'Montserrat', sans-serif; font-weight: 800; letter-spacing: 1px;">
-            <i class="bi bi-speedometer2"></i> Dashboard
-        </h1>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 style="font-family: 'Montserrat', sans-serif; font-weight: 800; letter-spacing: 1px;">
+                <i class="bi bi-graph-up"></i> Reports & Analytics
+            </h1>
+            <div class="d-flex gap-2">
+                <button onclick="triggerExport('csv')" class="btn btn-outline-primary btn-sm rounded-pill shadow-sm px-3 text-white">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+                </button>
+                <button onclick="triggerExport('pdf')" class="btn btn-primary btn-sm rounded-pill shadow-sm px-3">
+                    <i class="bi bi-file-earmark-pdf"></i> Export PDF
+                </button>
+            </div>
+        </div>
 
-        <!-- Quick Stats -->
+        <!-- Summary Cards -->
         <div class="row mb-4 g-3">
-            <div class="col-md-3">
-                <div class="card border-0 h-100" style="background: rgba(30, 64, 175, 0.4) !important; margin-bottom: 0;">
-                    <div class="card-body">
-                        <h5 class="card-title text-white-50" style="font-size: 0.8rem; text-transform: uppercase;">Total Violations</h5>
-                        <h2 class="mb-0 fw-bold" id="totalViolations">0</h2>
+            <div class="col-md-4">
+                <div class="card h-100 border-0" style="background: rgba(30, 64, 175, 0.2) !important; margin-bottom: 0;">
+                    <div class="card-body text-center">
+                        <h3 class="text-info fw-bold" id="totalViolations">0</h3>
+                        <p class="mb-0 text-white-50 small uppercase letter-spacing-1">Total Violations</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card border-0 h-100" style="background: rgba(180, 83, 9, 0.4) !important; margin-bottom: 0;">
-                    <div class="card-body">
-                        <h5 class="card-title text-white-50" style="font-size: 0.8rem; text-transform: uppercase;">Pending Verification</h5>
-                        <h2 class="mb-0 fw-bold" id="pendingVerification">0</h2>
+            <div class="col-md-4">
+                <div class="card h-100 border-0" style="background: rgba(21, 128, 61, 0.2) !important; margin-bottom: 0;">
+                    <div class="card-body text-center">
+                        <h3 class="text-success fw-bold" id="verifiedCount">0</h3>
+                        <p class="mb-0 text-white-50 small uppercase letter-spacing-1">Verified</p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="card border-0 h-100" style="background: rgba(21, 128, 61, 0.4) !important; margin-bottom: 0;">
-                    <div class="card-body">
-                        <h5 class="card-title text-white-50" style="font-size: 0.8rem; text-transform: uppercase;">Verified</h5>
-                        <h2 class="mb-0 fw-bold" id="verifiedCount">0</h2>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-3">
-                <div class="card border-0 h-100" style="background: rgba(185, 28, 28, 0.4) !important; margin-bottom: 0;">
-                    <div class="card-body">
-                        <h5 class="card-title text-white-50" style="font-size: 0.8rem; text-transform: uppercase;">Rejected</h5>
-                        <h2 class="mb-0 fw-bold" id="rejectedCount">0</h2>
+            <div class="col-md-4">
+                <div class="card h-100 border-0" style="background: rgba(185, 28, 28, 0.2) !important; margin-bottom: 0;">
+                    <div class="card-body text-center">
+                        <h3 class="text-danger fw-bold" id="rejectedCount">0</h3>
+                        <p class="mb-0 text-white-50 small uppercase letter-spacing-1">Rejected</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Quick Actions -->
-        <div class="row mb-4">
-            <div class="col-md-12">
+        <!-- Status & Type breakdowns -->
+        <div class="row mb-4 g-4">
+            <div class="col-md-6">
                 <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 text-white">Violations by Status</h5>
+                    </div>
                     <div class="card-body">
-                        <h5 class="card-title mb-3 text-white">Quick Actions</h5>
-                        <div class="btn-group" role="group">
-                            <a href="violations.html" class="btn btn-outline-warning">
-                                <i class="bi bi-exclamation-triangle"></i> Review Pending
-                            </a>
-                            <a href="live-stream.html" class="btn btn-outline-info">
-                                <i class="bi bi-camera-video"></i> View Livestream
-                            </a>
-                        </div>
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Status</th>
+                                    <th class="text-end">Count</th>
+                                </tr>
+                            </thead>
+                            <tbody id="statusBreakdownBody">
+                                <tr><td colspan="2" class="text-center text-muted">Loading breakdown...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0 text-white">Violations by Type</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Violation Type</th>
+                                    <th class="text-end">Count</th>
+                                </tr>
+                            </thead>
+                            <tbody id="typeBreakdownBody">
+                                <tr><td colspan="2" class="text-center text-muted">Loading breakdown...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Recent Violations -->
+        <!-- Daily Trend -->
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
-                    <div class="card-header bg-transparent">
-                        <h5 class="mb-0 text-white">Recent Violations</h5>
+                    <div class="card-header">
+                        <h5 class="mb-0 text-white">Daily Trend (Last 7 Days)</h5>
                     </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle mb-0">
-                                <thead>
-                                    <tr>
-                                        <th>ID</th>
-                                        <th>Time</th>
-                                        <th>Type</th>
-                                        <th>Plate</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="recentViolationsTable">
-                                    <tr>
-                                        <td colspan="6" class="text-center text-muted py-4">
-                                            <div class="spinner-border spinner-border-sm" role="status"></div> Loading recent violations...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th class="text-end">Violations</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dailyTrendBody">
+                                <tr><td colspan="2" class="text-center text-muted">Loading trend data...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -201,14 +218,12 @@
     <script>
         const backendUrl = Config.getBackendUrl();
 
-        // Redirect if session is not authenticated
         window.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'USER';
             
             const role = localStorage.getItem('user_role');
             if (role === 'Admin') {
-                const settingsDropdown = document.getElementById('adminSettingsDropdown');
-                if (settingsDropdown) settingsDropdown.classList.remove('d-none');
+                document.getElementById('adminSettingsDropdown').classList.remove('d-none');
             }
 
             try {
@@ -217,8 +232,7 @@
                 if (!data.authenticated) {
                     window.location.href = 'login.html';
                 } else {
-                    loadStats();
-                    loadRecentViolations();
+                    loadReports();
                 }
             } catch (err) {
                 console.error(err);
@@ -226,72 +240,81 @@
             }
         });
 
-        // Load statistics
-        async function loadStats() {
+        async function loadReports() {
             try {
-                const res = await fetch(`${backendUrl}/api/stats`, { mode: 'cors', credentials: 'include' });
+                const res = await fetch(`${backendUrl}/reports/api/data`, { mode: 'cors', credentials: 'include' });
                 const data = await res.json();
+
                 if (data.success) {
                     document.getElementById('totalViolations').textContent = data.total_violations;
-                    document.getElementById('pendingVerification').textContent = data.pending_verification;
                     document.getElementById('verifiedCount').textContent = data.verified_count;
                     document.getElementById('rejectedCount').textContent = data.rejected_count;
-                }
-            } catch (err) {
-                console.error('Error fetching stats:', err);
-            }
-        }
 
-        // Load recent violations
-        async function loadRecentViolations() {
-            try {
-                const res = await fetch(`${backendUrl}/violations/api/list?per_page=10`, { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
-                
-                if (data.success) {
-                    const tbody = document.getElementById('recentViolationsTable');
-                    tbody.innerHTML = '';
-                    
-                    if (data.violations.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">No violations detected yet.</td></tr>';
-                        return;
+                    // Render Status Breakdown
+                    const statusBody = document.getElementById('statusBreakdownBody');
+                    statusBody.innerHTML = '';
+                    const statuses = Object.keys(data.status_breakdown);
+                    if (statuses.length === 0) {
+                        statusBody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No status logs recorded.</td></tr>';
+                    } else {
+                        statuses.forEach(status => {
+                            let badgeClass = 'bg-secondary';
+                            if (status === 'UNVERIFIED' || status === 'LOGGED_ONLY') badgeClass = 'bg-warning text-dark';
+                            else if (status === 'VERIFIED') badgeClass = 'bg-success';
+                            else if (status === 'REJECTED') badgeClass = 'bg-danger';
+
+                            statusBody.innerHTML += `
+                                <tr>
+                                    <td><span class="badge ${badgeClass}">${status}</span></td>
+                                    <td class="text-end"><strong>${data.status_breakdown[status]}</strong></td>
+                                </tr>
+                            `;
+                        });
                     }
-                    
-                    data.violations.forEach(v => {
-                        let statusBadge = '';
-                        if (v.status === 'UNVERIFIED') statusBadge = '<span class="badge badge-status-warning">UNVERIFIED</span>';
-                        else if (v.status === 'VERIFIED') statusBadge = '<span class="badge badge-status-success">VERIFIED</span>';
-                        else if (v.status === 'REJECTED') statusBadge = '<span class="badge badge-status-danger">REJECTED</span>';
-                        else statusBadge = `<span class="badge badge-status-info">${v.status}</span>`;
 
-                        const formattedDate = new Date(v.detection_timestamp).toLocaleString();
-                        
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td>${v.id}</td>
-                            <td>${formattedDate}</td>
-                            <td>
-                                <span class="badge badge-type-danger">
-                                    ${v.violation_class === 'Non-compliant' || v.violation_class === 'invalid_helmet' ? 'Non-compliant' : v.violation_class}
-                                </span>
-                            </td>
-                            <td>${v.plate_number || 'N/A'}</td>
-                            <td>${statusBadge}</td>
-                            <td>
-                                <a href="violation-detail.html?id=${v.id}" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-eye"></i> View
-                                </a>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
+                    // Render Type Breakdown
+                    const typeBody = document.getElementById('typeBreakdownBody');
+                    typeBody.innerHTML = '';
+                    const types = Object.keys(data.class_breakdown);
+                    if (types.length === 0) {
+                        typeBody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No types recorded.</td></tr>';
+                    } else {
+                        types.forEach(type => {
+                            const formattedType = type === 'Non-compliant' || type === 'no_helmet' || type === 'No Helmet' || type === 'invalid_helmet' ? 'Non-Compliant' : type;
+                            typeBody.innerHTML += `
+                                <tr>
+                                    <td>${formattedType}</td>
+                                    <td class="text-end"><strong>${data.class_breakdown[type]}</strong></td>
+                                </tr>
+                            `;
+                        });
+                    }
+
+                    // Render Daily Trend
+                    const trendBody = document.getElementById('dailyTrendBody');
+                    trendBody.innerHTML = '';
+                    if (data.daily_trend.length === 0) {
+                        trendBody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No trend data for last 7 days.</td></tr>';
+                    } else {
+                        data.daily_trend.forEach(([date, count]) => {
+                            trendBody.innerHTML += `
+                                <tr>
+                                    <td>${date}</td>
+                                    <td class="text-end">${count}</td>
+                                </tr>
+                            `;
+                        });
+                    }
                 }
             } catch (err) {
-                console.error('Error loading recent violations:', err);
+                console.error(err);
             }
         }
 
-        // Handle Logout
+        function triggerExport(format) {
+            window.location.href = `${backendUrl}/reports/export/${format}`;
+        }
+
         async function handleLogout() {
             try {
                 await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
