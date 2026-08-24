@@ -196,28 +196,20 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Configuration management -->
+    <!-- Supabase JS Client SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Configuration & Direct Cloud Service -->
     <script src="config.js"></script>
+    <script src="supabase-db.js"></script>
     <script>
-        // Check session: if already logged in, redirect to dashboard.html
-        window.addEventListener('DOMContentLoaded', async () => {
-            const backendUrl = Config.getBackendUrl();
-            document.getElementById('backendUrlText').textContent = backendUrl;
-            document.getElementById('backendUrlInput').value = backendUrl;
-            
-            try {
-                const res = await fetch(`${backendUrl}/auth/api/session`, { 
-                    headers: { 'Accept': 'application/json' },
-                    mode: 'cors',
-                    credentials: 'include'
-                });
-                const data = await res.json();
-                if (data.authenticated) {
-                    window.location.href = 'portal.html';
-                }
-            } catch (err) {
-                console.log('Not logged in or backend offline:', err);
+        // Check session: if already logged in, redirect to portal.html
+        window.addEventListener('DOMContentLoaded', () => {
+            if (SupabaseDB.isLoggedIn()) {
+                window.location.href = 'portal.html';
             }
+            const aiUrl = Config.getAiWorkerUrl();
+            document.getElementById('backendUrlText').textContent = aiUrl ? `AI Tunnel: ${aiUrl}` : 'Cloud DB: Supabase (Active)';
+            document.getElementById('backendUrlInput').value = aiUrl;
         });
 
         // Toggle configuration modal
@@ -228,13 +220,12 @@
 
         function saveBackendUrl() {
             const inputVal = document.getElementById('backendUrlInput').value;
-            Config.setBackendUrl(inputVal);
-            document.getElementById('backendUrlText').textContent = Config.getBackendUrl();
+            Config.setAiWorkerUrl(inputVal);
+            document.getElementById('backendUrlText').textContent = inputVal ? `AI Tunnel: ${inputVal}` : 'Cloud DB: Supabase (Active)';
             configModal.hide();
-            window.location.reload();
         }
 
-        // Form submission
+        // Form submission (100% Direct Cloud Auth)
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const alertBox = document.getElementById('alertBox');
@@ -249,52 +240,18 @@
 
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
-            const backendUrl = Config.getBackendUrl();
-
-            if (!backendUrl) {
-                alertBox.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> Backend URL is not set. Click the <strong>gear icon (⚙️)</strong> at the top right to configure your Cloudflare Tunnel or local server URL.';
-                alertBox.classList.remove('d-none');
-                submitBtn.disabled = false;
-                btnText.classList.remove('d-none');
-                btnSpinner.classList.add('d-none');
-                return;
-            }
 
             try {
-                const res = await fetch(`${backendUrl}/auth/api/login`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ username, password }),
-                    mode: 'cors',
-                    credentials: 'include'
-                });
-
-                const data = await res.json();
-                
-                if (data && data.success) {
-                    localStorage.setItem('user_name', data.user.username);
-                    localStorage.setItem('user_role', data.user.role);
+                const result = await SupabaseDB.login(username, password);
+                if (result.success) {
                     window.location.href = 'portal.html';
                 } else {
-                    let errMsg = 'Invalid credentials';
-                    if (data && data.error) {
-                        if (typeof data.error === 'string') {
-                            errMsg = data.error;
-                        } else if (data.error.message) {
-                            errMsg = data.error.message;
-                        } else {
-                            errMsg = JSON.stringify(data.error);
-                        }
-                    }
-                    alertBox.textContent = errMsg;
+                    alertBox.textContent = result.error || 'Invalid credentials';
                     alertBox.classList.remove('d-none');
                 }
             } catch (err) {
                 console.error(err);
-                alertBox.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i> Could not connect to backend server. Make sure your local server/tunnel is active and the URL in settings (⚙️) is correct.';
+                alertBox.textContent = 'Login failed. Please verify your username and password.';
                 alertBox.classList.remove('d-none');
             } finally {
                 submitBtn.disabled = false;

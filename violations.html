@@ -226,34 +226,30 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="supabase-db.js"></script>
+    <script src="main.js"></script>
     <script>
-        const backendUrl = Config.getBackendUrl();
         let currentTab = 'normal';
         let currentPage = 1;
+        const perPage = 15;
 
-        // Redirect if session is not authenticated
         window.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'USER';
+            if (!SupabaseDB.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const currentUser = SupabaseDB.getCurrentUser();
+            document.getElementById('usernameDisplay').textContent = currentUser.username.toUpperCase();
             
-            const role = localStorage.getItem('user_role');
-            if (role === 'Admin') {
+            if (currentUser.role === 'Admin') {
                 const settingsDropdown = document.getElementById('adminSettingsDropdown');
                 if (settingsDropdown) settingsDropdown.classList.remove('d-none');
             }
 
-            try {
-                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
-                if (!data.authenticated) {
-                    window.location.href = 'login.html';
-                } else {
-                    loadViolations();
-                }
-            } catch (err) {
-                console.error(err);
-                window.location.href = 'login.html';
-            }
+            loadViolations();
         });
 
         // Form Submit
@@ -279,7 +275,7 @@
         }
 
         async function loadViolations() {
-            const query = document.getElementById('q').value;
+            const query = document.getElementById('q').value.trim();
             const status = document.getElementById('status').value;
             
             const tbody = document.getElementById('violationsTableBody');
@@ -287,27 +283,24 @@
                 <tr>
                     <td colspan="8" class="text-center text-muted py-5">
                         <div class="spinner-border text-primary" role="status"></div>
-                        <div class="mt-2">Fetching records...</div>
+                        <div class="mt-2">Fetching records from Supabase...</div>
                     </td>
                 </tr>
             `;
 
             try {
-                const url = new URL(`${backendUrl}/violations/api/list`);
-                url.searchParams.append('tab', currentTab);
-                url.searchParams.append('page', currentPage);
-                if (query) url.searchParams.append('q', query);
-                if (status !== 'ALL') url.searchParams.append('status', status);
-
-                const res = await fetch(url.toString(), { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
+                const data = await SupabaseDB.getViolations({
+                    page: currentPage,
+                    per_page: perPage,
+                    status: status,
+                    search: query,
+                    sort: 'desc'
+                });
 
                 if (data.success) {
-                    // Update counts
-                    document.getElementById('normalCount').textContent = data.normal_count;
-                    document.getElementById('flaggedCount').textContent = data.flagged_count;
+                    document.getElementById('normalCount').textContent = data.total;
+                    document.getElementById('flaggedCount').textContent = 0;
 
-                    // Render Table
                     tbody.innerHTML = '';
                     if (data.violations.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-5">No violations found matching filters.</td></tr>';
@@ -323,25 +316,8 @@
                         else statusBadge = `<span class="badge badge-status-info px-3 shadow-sm">${v.status}</span>`;
 
                         const formattedDate = new Date(v.detection_timestamp).toLocaleString();
-                        
-                        // Decide preview image URL
-                        let previewUrl = '';
-                        if (v.evidence_snapshot) {
-                            previewUrl = `${backendUrl}/violation-data/${v.evidence_snapshot}`;
-                        } else if (v.annotated_file) {
-                            previewUrl = `${backendUrl}/violation-data/${v.annotated_file}`;
-                        } else if (v.frame_images && v.frame_images.length > 0) {
-                            previewUrl = `${backendUrl}/violation-data/${v.frame_images[0]}`;
-                        }
-
-                        let frameCountBadge = '';
-                        if (v.frame_images && v.frame_images.length > 0) {
-                            frameCountBadge = `
-                                <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-primary shadow" style="font-size:0.6rem; z-index: 1;">
-                                    ${v.frame_images.length}
-                                </span>
-                            `;
-                        }
+                        const rawImg = v.evidence_snapshot || v.annotated_file || v.source_file;
+                        const previewUrl = SupabaseDB.resolveImageUrl(rawImg);
 
                         const tr = document.createElement('tr');
                         tr.innerHTML = `
@@ -349,19 +325,18 @@
                             <td>
                                 <div class="position-relative d-inline-block">
                                     ${previewUrl ? `
-                                        <img src="${previewUrl}" alt="Preview" class="img-thumbnail shadow-sm" style="width:80px;height:56px;object-fit:cover;border-radius:10px;cursor:pointer; transition: transform 0.2s;" onclick="openPreview('${previewUrl}', ${JSON.stringify(v.frame_images || [])})">
+                                        <img src="${previewUrl}" alt="Preview" class="img-thumbnail shadow-sm" style="width:80px;height:56px;object-fit:cover;border-radius:10px;cursor:pointer; transition: transform 0.2s;" onclick="openPreview('${previewUrl}')">
                                     ` : `
                                         <div style="width:80px;height:56px;background:#f8f9fa;border-radius:10px;border:1px solid #dee2e6;display:flex;align-items:center;justify-content:center;">
                                             <i class="bi bi-image text-muted"></i>
                                         </div>
                                     `}
-                                    ${frameCountBadge}
                                 </div>
                             </td>
                             <td>${formattedDate}</td>
                             <td>
                                 <span class="badge badge-type-danger px-3 shadow-sm">
-                                    ${(v.violation_class || '').toLowerCase() === 'no_helmet' || (v.violation_class || '').toLowerCase() === 'no helmet' || v.violation_class === 'invalid_helmet' || v.violation_class === 'Non-compliant' ? 'Non-Compliant' : v.violation_class}
+                                    ${v.violation_category || v.violation_class || 'Non-Compliant'}
                                 </span>
                             </td>
                             <td>
@@ -369,7 +344,7 @@
                             </td>
                             <td>
                                 <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 border border-info border-opacity-25 shadow-sm">
-                                    <i class="bi bi-geo-alt-fill"></i> GZ Building
+                                    <i class="bi bi-geo-alt-fill"></i> ${v.location || 'GZ Building'}
                                 </span>
                             </td>
                             <td>${statusBadge}</td>
@@ -382,36 +357,30 @@
                         tbody.appendChild(tr);
                     });
 
-                    // Render Pagination
-                    renderPagination(data.pages, data.current_page);
+                    renderPagination(data.pages, data.page);
                 }
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-5">Error connecting to server. Please verify the backend is running.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-5">Error loading records from Supabase.</td></tr>';
             }
         }
 
-        // Preview helper
         const galleryModal = new bootstrap.Modal(document.getElementById('galleryModal'));
         function openPreview(imgUrl) {
             document.getElementById('modalPreviewImg').src = imgUrl;
             galleryModal.show();
         }
 
-        // Render pagination buttons
         function renderPagination(totalPages, currentPageNum) {
             const container = document.getElementById('paginationContainer');
             container.innerHTML = '';
-
             if (totalPages <= 1) return;
 
-            // Previous Button
             const prevLi = document.createElement('li');
             prevLi.className = `page-item ${currentPageNum === 1 ? 'disabled' : ''}`;
             prevLi.innerHTML = `<button class="page-link" onclick="changePage(${currentPageNum - 1})"><i class="bi bi-chevron-left"></i></button>`;
             container.appendChild(prevLi);
 
-            // Page numbers
             for (let i = 1; i <= totalPages; i++) {
                 const pageLi = document.createElement('li');
                 pageLi.className = `page-item ${i === currentPageNum ? 'active' : ''}`;
@@ -419,7 +388,6 @@
                 container.appendChild(pageLi);
             }
 
-            // Next Button
             const nextLi = document.createElement('li');
             nextLi.className = `page-item ${currentPageNum === totalPages ? 'disabled' : ''}`;
             nextLi.innerHTML = `<button class="page-link" onclick="changePage(${currentPageNum + 1})"><i class="bi bi-chevron-right"></i></button>`;
@@ -431,16 +399,8 @@
             loadViolations();
         }
 
-        // Handle Logout
-        async function handleLogout() {
-            try {
-                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
-            } catch (err) {
-                console.error(err);
-            }
-            localStorage.removeItem('user_name');
-            localStorage.removeItem('user_role');
-            window.location.href = 'login.html';
+        function handleLogout() {
+            SupabaseDB.logout();
         }
     </script>
 </body>

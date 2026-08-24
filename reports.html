@@ -214,116 +214,126 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="supabase-db.js"></script>
+    <script src="main.js"></script>
     <script>
-        const backendUrl = Config.getBackendUrl();
-
         window.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'USER';
-            
-            const role = localStorage.getItem('user_role');
-            if (role === 'Admin') {
-                document.getElementById('adminSettingsDropdown').classList.remove('d-none');
+            if (!SupabaseDB.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
             }
 
-            try {
-                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
-                if (!data.authenticated) {
-                    window.location.href = 'login.html';
-                } else {
-                    loadReports();
-                }
-            } catch (err) {
-                console.error(err);
-                window.location.href = 'login.html';
+            const currentUser = SupabaseDB.getCurrentUser();
+            document.getElementById('usernameDisplay').textContent = currentUser.username.toUpperCase();
+            
+            if (currentUser.role === 'Admin') {
+                const settingsDropdown = document.getElementById('adminSettingsDropdown');
+                if (settingsDropdown) settingsDropdown.classList.remove('d-none');
             }
+
+            loadReports();
         });
 
         async function loadReports() {
             try {
-                const res = await fetch(`${backendUrl}/reports/api/data`, { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
+                const { data: violations, error } = await SupabaseDB.init()
+                    .from('violations')
+                    .select('id, status, violation_class, violation_category, detection_timestamp');
 
-                if (data.success) {
-                    document.getElementById('totalViolations').textContent = data.total_violations;
-                    document.getElementById('verifiedCount').textContent = data.verified_count;
-                    document.getElementById('rejectedCount').textContent = data.rejected_count;
+                if (!error && violations) {
+                    let total = violations.length;
+                    let verified = 0;
+                    let rejected = 0;
+                    let statusBreakdown = {};
+                    let classBreakdown = {};
+                    let dailyMap = {};
+
+                    violations.forEach(v => {
+                        // Status counts
+                        const st = v.status || 'UNVERIFIED';
+                        statusBreakdown[st] = (statusBreakdown[st] || 0) + 1;
+                        if (st === 'VERIFIED') verified++;
+                        if (st === 'REJECTED') rejected++;
+
+                        // Type counts
+                        const cat = v.violation_category || v.violation_class || 'Non-Compliant';
+                        classBreakdown[cat] = (classBreakdown[cat] || 0) + 1;
+
+                        // Daily counts
+                        if (v.detection_timestamp) {
+                            const dateStr = v.detection_timestamp.split('T')[0];
+                            dailyMap[dateStr] = (dailyMap[dateStr] || 0) + 1;
+                        }
+                    });
+
+                    document.getElementById('totalViolations').textContent = total;
+                    document.getElementById('verifiedCount').textContent = verified;
+                    document.getElementById('rejectedCount').textContent = rejected;
 
                     // Render Status Breakdown
                     const statusBody = document.getElementById('statusBreakdownBody');
                     statusBody.innerHTML = '';
-                    const statuses = Object.keys(data.status_breakdown);
-                    if (statuses.length === 0) {
-                        statusBody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No status logs recorded.</td></tr>';
-                    } else {
-                        statuses.forEach(status => {
-                            let badgeClass = 'bg-secondary';
-                            if (status === 'UNVERIFIED' || status === 'LOGGED_ONLY') badgeClass = 'bg-warning text-dark';
-                            else if (status === 'VERIFIED') badgeClass = 'bg-success';
-                            else if (status === 'REJECTED') badgeClass = 'bg-danger';
+                    Object.keys(statusBreakdown).forEach(status => {
+                        let badgeClass = 'bg-secondary';
+                        if (status === 'UNVERIFIED' || status === 'LOGGED_ONLY') badgeClass = 'bg-warning text-dark';
+                        else if (status === 'VERIFIED') badgeClass = 'bg-success';
+                        else if (status === 'REJECTED') badgeClass = 'bg-danger';
 
-                            statusBody.innerHTML += `
-                                <tr>
-                                    <td><span class="badge ${badgeClass}">${status}</span></td>
-                                    <td class="text-end"><strong>${data.status_breakdown[status]}</strong></td>
-                                </tr>
-                            `;
-                        });
-                    }
+                        statusBody.innerHTML += `
+                            <tr>
+                                <td><span class="badge ${badgeClass}">${status}</span></td>
+                                <td class="text-end"><strong>${statusBreakdown[status]}</strong></td>
+                            </tr>
+                        `;
+                    });
 
                     // Render Type Breakdown
                     const typeBody = document.getElementById('typeBreakdownBody');
                     typeBody.innerHTML = '';
-                    const types = Object.keys(data.class_breakdown);
-                    if (types.length === 0) {
-                        typeBody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No types recorded.</td></tr>';
-                    } else {
-                        types.forEach(type => {
-                            const formattedType = type === 'Non-compliant' || type === 'no_helmet' || type === 'No Helmet' || type === 'invalid_helmet' ? 'Non-Compliant' : type;
-                            typeBody.innerHTML += `
-                                <tr>
-                                    <td>${formattedType}</td>
-                                    <td class="text-end"><strong>${data.class_breakdown[type]}</strong></td>
-                                </tr>
-                            `;
-                        });
-                    }
+                    Object.keys(classBreakdown).forEach(type => {
+                        typeBody.innerHTML += `
+                            <tr>
+                                <td>${type}</td>
+                                <td class="text-end"><strong>${classBreakdown[type]}</strong></td>
+                            </tr>
+                        `;
+                    });
 
-                    // Render Daily Trend
+                    // Render Daily Trend (sorted last 7 days)
                     const trendBody = document.getElementById('dailyTrendBody');
                     trendBody.innerHTML = '';
-                    if (data.daily_trend.length === 0) {
-                        trendBody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No trend data for last 7 days.</td></tr>';
+                    const sortedDates = Object.keys(dailyMap).sort().slice(-7);
+                    if (sortedDates.length === 0) {
+                        trendBody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No trend data available.</td></tr>';
                     } else {
-                        data.daily_trend.forEach(([date, count]) => {
+                        sortedDates.forEach(date => {
                             trendBody.innerHTML += `
                                 <tr>
                                     <td>${date}</td>
-                                    <td class="text-end">${count}</td>
+                                    <td class="text-end">${dailyMap[date]}</td>
                                 </tr>
                             `;
                         });
                     }
                 }
             } catch (err) {
-                console.error(err);
+                console.error('Error loading reports:', err);
             }
         }
 
         function triggerExport(format) {
-            window.location.href = `${backendUrl}/reports/export/${format}`;
+            const workerUrl = Config.getAiWorkerUrl();
+            if (workerUrl) {
+                window.location.href = `${workerUrl}/reports/export/${format}`;
+            } else {
+                alert('Local backend / Tunnel is required to generate PDF/CSV server exports. Configure it in Settings (⚙️).');
+            }
         }
 
-        async function handleLogout() {
-            try {
-                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
-            } catch (err) {
-                console.error(err);
-            }
-            localStorage.removeItem('user_name');
-            localStorage.removeItem('user_role');
-            window.location.href = 'login.html';
+        function handleLogout() {
+            SupabaseDB.logout();
         }
     </script>
 </body>

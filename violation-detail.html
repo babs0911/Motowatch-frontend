@@ -325,18 +325,24 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="supabase-db.js"></script>
     <script src="main.js"></script>
     <script>
-        const backendUrl = Config.getBackendUrl();
         const urlParams = new URLSearchParams(window.location.search);
         const violationId = urlParams.get('id');
 
         window.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'USER';
+            if (!SupabaseDB.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const currentUser = SupabaseDB.getCurrentUser();
+            document.getElementById('usernameDisplay').textContent = currentUser.username.toUpperCase();
             
-            const role = localStorage.getItem('user_role');
-            if (role === 'Admin') {
+            if (currentUser.role === 'Admin') {
                 const settingsDropdown = document.getElementById('adminSettingsDropdown');
                 if (settingsDropdown) settingsDropdown.classList.remove('d-none');
             }
@@ -346,26 +352,14 @@
                 return;
             }
 
-            try {
-                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
-                if (!data.authenticated) {
-                    window.location.href = 'login.html';
-                } else {
-                    loadViolationDetails();
-                }
-            } catch (err) {
-                console.error(err);
-                window.location.href = 'login.html';
-            }
+            loadViolationDetails();
         });
 
         async function loadViolationDetails() {
             try {
-                const res = await fetch(`${backendUrl}/violations/api/${violationId}`, { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
+                const data = await SupabaseDB.getViolationDetail(violationId);
 
-                if (data.success) {
+                if (data.success && data.violation) {
                     const v = data.violation;
 
                     // Header Info
@@ -375,14 +369,14 @@
                     const carouselInner = document.getElementById('carouselInner');
                     carouselInner.innerHTML = '';
 
-                    const frames = v.frame_images || [];
+                    const frames = Array.isArray(v.frame_images) ? v.frame_images : (typeof v.frame_images === 'string' ? JSON.parse(v.frame_images || '[]') : []);
                     if (frames.length > 0) {
                         document.getElementById('framesCountBadge').textContent = `${frames.length} frames`;
                         document.getElementById('framesCountBadge').classList.remove('d-none');
                         
                         frames.forEach((frame, idx) => {
                             const activeClass = idx === 0 ? 'active' : '';
-                            const frameUrl = `${backendUrl}/violation-data/${frame}`;
+                            const frameUrl = SupabaseDB.resolveImageUrl(frame);
                             carouselInner.innerHTML += `
                                 <div class="carousel-item ${activeClass}">
                                     <img src="${frameUrl}" class="d-block mx-auto" alt="Frame ${idx+1}" style="max-height:460px;max-width:100%;object-fit:contain;">
@@ -401,7 +395,7 @@
                             frames.forEach((frame, idx) => {
                                 const activeClass = idx === 0 ? 'active' : '';
                                 const dNoneClass = idx >= 8 ? 'd-none more-frames' : '';
-                                const frameUrl = `${backendUrl}/violation-data/${frame}`;
+                                const frameUrl = SupabaseDB.resolveImageUrl(frame);
                                 thumbStrip.innerHTML += `
                                     <img src="${frameUrl}" alt="Frame ${idx+1}" class="carousel-thumb ${dNoneClass} ${activeClass}" data-slide-to="${idx}" style="width: 70px; height: 50px; border-radius: 8px;">
                                 `;
@@ -418,15 +412,9 @@
                         }
                     } else {
                         // Fallback single image
-                        let imgUrl = '';
-                        let captionText = 'Detection Frame';
-                        if (v.evidence_snapshot) {
-                            imgUrl = `${backendUrl}/violation-data/${v.evidence_snapshot}`;
-                            captionText = 'Evidence Snapshot';
-                        } else if (v.annotated_file) {
-                            imgUrl = `${backendUrl}/violation-data/${v.annotated_file}`;
-                            captionText = 'Annotated Detection';
-                        }
+                        let rawImg = v.evidence_snapshot || v.annotated_file || v.source_file;
+                        let imgUrl = SupabaseDB.resolveImageUrl(rawImg);
+                        let captionText = v.evidence_snapshot ? 'Evidence Snapshot' : 'Annotated Detection';
 
                         if (imgUrl) {
                             carouselInner.innerHTML = `
@@ -445,16 +433,16 @@
                     // Snapshot evidence below carousel
                     if (v.evidence_snapshot) {
                         document.getElementById('snapshotCropCol').classList.remove('d-none');
-                        document.getElementById('evidenceSnapshotImg').src = `${backendUrl}/violation-data/${v.evidence_snapshot}`;
+                        document.getElementById('evidenceSnapshotImg').src = SupabaseDB.resolveImageUrl(v.evidence_snapshot);
                     }
                     const rawCrop = v.plate_crop_raw_file || v.plate_crop_file;
                     if (rawCrop) {
                         document.getElementById('rawCropCol').classList.remove('d-none');
-                        document.getElementById('plateCropImg').src = `${backendUrl}/violation-data/${rawCrop}`;
+                        document.getElementById('plateCropImg').src = SupabaseDB.resolveImageUrl(rawCrop);
                     }
                     if (v.plate_crop_processed_file) {
                         document.getElementById('processedCropCol').classList.remove('d-none');
-                        document.getElementById('plateCropProcessedImg').src = `${backendUrl}/violation-data/${v.plate_crop_processed_file}`;
+                        document.getElementById('plateCropProcessedImg').src = SupabaseDB.resolveImageUrl(v.plate_crop_processed_file);
                     }
 
                     // System Review Data
@@ -494,37 +482,37 @@
 
                     // Prepopulate Edit Form fields
                     document.getElementById('plate_number').value = v.plate_number || '';
-                    document.getElementById('edit_notes').value = v.verification_notes || '';
+                    document.getElementById('edit_notes').value = v.verification_remarks || '';
 
                     // Violator info card
                     const violatorBody = document.getElementById('violatorCardBody');
-                    if (v.violator) {
+                    if (data.violator) {
                         const lBadge = document.getElementById('licenseTypeBadge');
-                        lBadge.textContent = v.violator.license_type || 'N/A';
+                        lBadge.textContent = data.violator.license_type || 'N/A';
                         lBadge.classList.remove('d-none');
                         
                         violatorBody.innerHTML = `
                             <dl class="row mb-0">
                                 <dt class="col-sm-5 text-white-50">Name:</dt>
-                                <dd class="col-sm-7">${v.violator.first_name} ${v.violator.last_name}</dd>
-                                ${v.violator.middle_name ? `<dt class="col-sm-5 text-white-50">Middle Name:</dt><dd class="col-sm-7">${v.violator.middle_name}</dd>` : ''}
+                                <dd class="col-sm-7">${data.violator.first_name} ${data.violator.last_name}</dd>
+                                ${data.violator.middle_name ? `<dt class="col-sm-5 text-white-50">Middle Name:</dt><dd class="col-sm-7">${data.violator.middle_name}</dd>` : ''}
                                 <dt class="col-sm-5 text-white-50">License:</dt>
-                                <dd class="col-sm-7">${v.violator.license_type || 'N/A'}</dd>
+                                <dd class="col-sm-7">${data.violator.license_type || 'N/A'}</dd>
                                 <dt class="col-sm-5 text-white-50">Plate:</dt>
-                                <dd class="col-sm-7"><strong>${v.violator.plate_number}</strong></dd>
+                                <dd class="col-sm-7"><strong>${data.violator.plate_number}</strong></dd>
                                 <dt class="col-sm-5 text-white-50">Phone:</dt>
-                                <dd class="col-sm-7">${v.violator.phone_number || 'N/A'}</dd>
+                                <dd class="col-sm-7">${data.violator.phone_number || 'N/A'}</dd>
                                 <dt class="col-sm-5 text-white-50">Email:</dt>
-                                <dd class="col-sm-7">${v.violator.email || 'N/A'}</dd>
+                                <dd class="col-sm-7">${data.violator.email || 'N/A'}</dd>
                                 <dt class="col-sm-5 text-white-50">Joined:</dt>
-                                <dd class="col-sm-7">${new Date(v.violator.created_at).toLocaleDateString()}</dd>
+                                <dd class="col-sm-7">${new Date(data.violator.created_at).toLocaleDateString()}</dd>
                             </dl>
                         `;
                     } else {
                         document.getElementById('licenseTypeBadge').classList.add('d-none');
                         violatorBody.innerHTML = `
                             <div class="text-center py-2 text-muted">
-                                <i class="bi bi-person-x me-1"></i> No violator information yet.<br><small>Waiting for OCR.</small>
+                                <i class="bi bi-person-x me-1"></i> No violator information recorded.
                             </div>
                         `;
                     }
@@ -551,7 +539,7 @@
                     }
                 }
             } catch (err) {
-                console.error(err);
+                console.error('Error loading violation details:', err);
             }
         }
 
@@ -587,6 +575,7 @@
         function toggleExtraFrames() {
             const frames = document.querySelectorAll('.more-frames');
             const btn = document.getElementById('toggleFrames');
+            if (!frames.length) return;
             const isHidden = frames[0].classList.contains('d-none');
             
             frames.forEach(f => f.classList.toggle('d-none'));
@@ -601,22 +590,14 @@
             const alertBox = document.getElementById('alertBox');
 
             try {
-                const res = await fetch(`${backendUrl}/violations/api/${violationId}/verify`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ notes }),
-                    mode: 'cors',
-                    credentials: 'include'
-                });
-                const data = await res.json();
-
-                if (data.success) {
-                    alertBox.textContent = data.message;
+                const res = await SupabaseDB.updateViolationStatus(violationId, 'VERIFIED', notes);
+                if (res.success) {
+                    alertBox.textContent = 'Violation verified successfully!';
                     alertBox.className = 'alert alert-success alert-dismissible';
                     alertBox.classList.remove('d-none');
                     loadViolationDetails();
                 } else {
-                    alertBox.textContent = data.error || 'Operation failed';
+                    alertBox.textContent = res.error || 'Operation failed';
                     alertBox.className = 'alert alert-danger alert-dismissible';
                     alertBox.classList.remove('d-none');
                 }
@@ -635,22 +616,14 @@
             const alertBox = document.getElementById('alertBox');
 
             try {
-                const res = await fetch(`${backendUrl}/violations/api/${violationId}/reject`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ notes }),
-                    mode: 'cors',
-                    credentials: 'include'
-                });
-                const data = await res.json();
-
-                if (data.success) {
-                    alertBox.textContent = data.message;
-                    alertBox.className = 'alert alert-success alert-dismissible';
+                const res = await SupabaseDB.updateViolationStatus(violationId, 'REJECTED', notes);
+                if (res.success) {
+                    alertBox.textContent = 'Violation rejected.';
+                    alertBox.className = 'alert alert-warning alert-dismissible';
                     alertBox.classList.remove('d-none');
                     loadViolationDetails();
                 } else {
-                    alertBox.textContent = data.error || 'Operation failed';
+                    alertBox.textContent = res.error || 'Operation failed';
                     alertBox.className = 'alert alert-danger alert-dismissible';
                     alertBox.classList.remove('d-none');
                 }
@@ -670,22 +643,19 @@
             const alertBox = document.getElementById('alertBox');
 
             try {
-                const res = await fetch(`${backendUrl}/violations/api/${violationId}/edit`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ plate_number, notes }),
-                    mode: 'cors',
-                    credentials: 'include'
-                });
-                const data = await res.json();
+                const { error } = await SupabaseDB.init().from('violations').update({
+                    plate_number: plate_number.toUpperCase(),
+                    verification_remarks: notes,
+                    updated_at: new Date().toISOString()
+                }).eq('id', violationId);
 
-                if (data.success) {
-                    alertBox.textContent = data.message;
+                if (!error) {
+                    alertBox.textContent = 'Plate number updated successfully!';
                     alertBox.className = 'alert alert-success alert-dismissible';
                     alertBox.classList.remove('d-none');
                     loadViolationDetails();
                 } else {
-                    alertBox.textContent = data.error || 'Operation failed';
+                    alertBox.textContent = error.message || 'Operation failed';
                     alertBox.className = 'alert alert-danger alert-dismissible';
                     alertBox.classList.remove('d-none');
                 }
@@ -697,16 +667,8 @@
             }
         });
 
-        // Handle Logout
-        async function handleLogout() {
-            try {
-                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
-            } catch (err) {
-                console.error(err);
-            }
-            localStorage.removeItem('user_name');
-            localStorage.removeItem('user_role');
-            window.location.href = 'login.html';
+        function handleLogout() {
+            SupabaseDB.logout();
         }
     </script>
 </body>

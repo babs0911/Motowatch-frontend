@@ -246,58 +246,46 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="supabase-db.js"></script>
+    <script src="main.js"></script>
     <script>
-        const backendUrl = Config.getBackendUrl();
-
         window.addEventListener('DOMContentLoaded', async () => {
-            const username = (localStorage.getItem('user_name') || 'User').toUpperCase();
-            document.getElementById('usernameDisplay').textContent = username;
-            document.getElementById('heroUsername').textContent = username;
+            if (!SupabaseDB.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const currentUser = SupabaseDB.getCurrentUser();
+            document.getElementById('usernameDisplay').textContent = currentUser.username.toUpperCase();
+            document.getElementById('heroUsername').textContent = currentUser.username.toUpperCase();
             
-            const role = localStorage.getItem('user_role');
-            if (role === 'Admin') {
+            if (currentUser.role === 'Admin') {
                 const usersItem = document.getElementById('portalUsersItem');
                 if (usersItem) usersItem.classList.remove('d-none');
             }
             
-            try {
-                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
-                if (!data.authenticated) {
-                    window.location.href = 'login.html';
-                } else {
-                    loadStats();
-                }
-            } catch (err) {
-                console.error(err);
-                window.location.href = 'login.html';
-            }
+            loadStats();
         });
 
         async function loadStats() {
             try {
-                const res = await fetch(`${backendUrl}/api/stats`, { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
+                const data = await SupabaseDB.getStats();
                 if (data.success && data.total_violations > 0) {
                     const badge = document.getElementById('totalViolationsBadge');
-                    badge.textContent = data.total_violations;
-                    badge.classList.remove('d-none');
+                    if (badge) {
+                        badge.textContent = data.total_violations;
+                        badge.classList.remove('d-none');
+                    }
                 }
             } catch (err) {
-                console.error('Error fetching stats:', err);
+                console.error('Error fetching stats from Supabase:', err);
             }
         }
 
-        async function handleLogout() {
-            try {
-                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
-            } catch (err) {
-                console.error(err);
-            }
-            localStorage.removeItem('user_name');
-            localStorage.removeItem('user_role');
-            window.location.href = 'login.html';
+        function handleLogout() {
+            SupabaseDB.logout();
         }
     </script>
 </body>
