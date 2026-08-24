@@ -46,34 +46,51 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // 2. Add "AI Camera Settings" and "Database Tools" to Tools / Admin dropdowns
-    const role = localStorage.getItem('user_role');
-    const toolsDropdowns = document.querySelectorAll('.nav-item.dropdown .dropdown-menu');
-    toolsDropdowns.forEach(menu => {
-        // Add Database Export and Import if user is Admin and in Tools dropdown
-        if (role === 'Admin' && menu.closest('.nav-item').textContent.includes('TOOLS') && !menu.querySelector('.db-export-item')) {
-            const divider = document.createElement('li');
-            divider.innerHTML = '<hr class="dropdown-divider border-secondary">';
-            menu.appendChild(divider);
+    function setupAdminMenuItems() {
+        const currentUser = (typeof SupabaseDB !== 'undefined' && SupabaseDB.getCurrentUser) ? SupabaseDB.getCurrentUser() : null;
+        const role = currentUser ? currentUser.role : (localStorage.getItem('user_role') || '');
+        const isAdmin = role && role.toLowerCase() === 'admin';
 
-            const exportLi = document.createElement('li');
-            exportLi.className = 'db-export-item';
-            exportLi.innerHTML = `
-                <a class="dropdown-item py-2" href="#" onclick="exportDatabaseJson(event)">
-                    <i class="bi bi-download me-2 text-warning"></i> Export Database (JSON)
-                </a>
-            `;
-            menu.appendChild(exportLi);
-
-            const importLi = document.createElement('li');
-            importLi.className = 'db-import-item';
-            importLi.innerHTML = `
-                <a class="dropdown-item py-2" href="#" onclick="openImportDbModal(event)">
-                    <i class="bi bi-upload me-2 text-success"></i> Import Database
-                </a>
-            `;
-            menu.appendChild(importLi);
+        if (isAdmin) {
+            // Unhide all static admin database tools
+            document.querySelectorAll('.admin-db-tool').forEach(el => el.classList.remove('d-none'));
+            const adminDropdown = document.getElementById('adminSettingsDropdown');
+            if (adminDropdown) adminDropdown.classList.remove('d-none');
         }
-    });
+
+        const toolsMenus = document.querySelectorAll('.nav-item.dropdown .dropdown-menu');
+        toolsMenus.forEach(menu => {
+            const navText = menu.closest('.nav-item')?.textContent?.toUpperCase() || '';
+            if (navText.includes('TOOLS') && !menu.querySelector('.db-export-item')) {
+                const divider = document.createElement('li');
+                divider.className = isAdmin ? 'admin-db-tool' : 'admin-db-tool d-none';
+                divider.innerHTML = '<hr class="dropdown-divider border-secondary">';
+                menu.appendChild(divider);
+
+                const exportLi = document.createElement('li');
+                exportLi.className = isAdmin ? 'db-export-item admin-db-tool' : 'db-export-item admin-db-tool d-none';
+                exportLi.innerHTML = `
+                    <a class="dropdown-item py-2" href="#" onclick="exportDatabaseJson(event)">
+                        <i class="bi bi-download me-2 text-warning"></i> Export Database (JSON)
+                    </a>
+                `;
+                menu.appendChild(exportLi);
+
+                const importLi = document.createElement('li');
+                importLi.className = isAdmin ? 'db-import-item admin-db-tool' : 'db-import-item admin-db-tool d-none';
+                importLi.innerHTML = `
+                    <a class="dropdown-item py-2" href="#" onclick="openImportDbModal(event)">
+                        <i class="bi bi-upload me-2 text-success"></i> Import Database
+                    </a>
+                `;
+                menu.appendChild(importLi);
+            }
+        });
+    }
+
+    setupAdminMenuItems();
+    // Also run on next tick in case SupabaseDB initialized slightly after DOMContentLoaded
+    setTimeout(setupAdminMenuItems, 300);
 
     const settingsDropdowns = document.querySelectorAll('#adminSettingsDropdown .dropdown-menu');
     settingsDropdowns.forEach(menu => {

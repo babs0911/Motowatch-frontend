@@ -163,6 +163,10 @@
                             <i class="bi bi-person-circle me-1"></i> <span id="usernameDisplay">USER</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark border-secondary shadow-lg">
+                            <li><a class="dropdown-item py-2" href="upload.html"><i class="bi bi-image me-2"></i> Upload Image/Video</a></li>
+                            <li class="admin-db-tool d-none"><hr class="dropdown-divider border-secondary"></li>
+                            <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="exportDatabaseJson(event)"><i class="bi bi-download me-2 text-warning"></i> Export Database (JSON)</a></li>
+                            <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="openImportDbModal(event)"><i class="bi bi-upload me-2 text-success"></i> Import Database</a></li>
                             <li><a class="dropdown-item text-danger py-2" href="#" onclick="handleLogout()">
                                 <i class="bi bi-box-arrow-right me-2"></i> LOGOUT
                             </a></li>
