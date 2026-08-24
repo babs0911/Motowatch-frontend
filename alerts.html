@@ -115,7 +115,7 @@
     <!-- Main Content -->
     <main class="container my-4 flex-grow-1" style="position: relative;">
         <h1 class="mb-4 fw-bold" style="font-family: 'Montserrat', sans-serif; letter-spacing: 1px;">
-            <i class="bi bi-bell"></i> Notification Log
+            <i class="bi bi-bell"></i> Notification Logs
         </h1>
 
         <!-- Filter Form -->
@@ -123,17 +123,18 @@
             <div class="card-body">
                 <form id="filterForm" class="row g-3 align-items-end" onsubmit="applyFilters(event)">
                     <div class="col-md-4">
-                        <label for="statusFilter" class="form-label text-white-50 small">Filter by Status</label>
+                        <label for="statusFilter" class="form-label text-white-50 small">Filter Status</label>
                         <select class="form-select" id="statusFilter">
-                            <option value="ALL">All Statuses</option>
-                            <option value="SUCCESS">Success</option>
+                            <option value="ALL">All</option>
+                            <option value="SENT">Sent</option>
                             <option value="FAILED">Failed</option>
+                            <option value="SKIPPED">Skipped</option>
                         </select>
                     </div>
                     <div class="col-md-4">
-                        <label for="typeFilter" class="form-label text-white-50 small">Filter by Type</label>
+                        <label for="typeFilter" class="form-label text-white-50 small">Type</label>
                         <select class="form-select" id="typeFilter">
-                            <option value="ALL">All Types</option>
+                            <option value="ALL">All</option>
                             <option value="SMS">SMS</option>
                             <option value="EMAIL">Email</option>
                         </select>
@@ -152,23 +153,21 @@
         <div class="card border-0 rounded-4 overflow-hidden mb-4">
             <div class="card-body p-0">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle mb-0">
+                    <table class="table table-sm table-hover align-middle mb-0">
                         <thead>
                             <tr>
-                                <th class="ps-4">ID</th>
-                                <th>Violation</th>
+                                <th class="ps-4">Time</th>
+                                <th>Violation ID</th>
                                 <th>Type</th>
                                 <th>Recipient</th>
-                                <th>Date Sent</th>
                                 <th>Status</th>
-                                <th>Details</th>
                             </tr>
                         </thead>
                         <tbody id="logsTableBody">
                             <tr>
-                                <td colspan="7" class="text-center text-muted py-5">
+                                <td colspan="5" class="text-center text-muted py-5">
                                     <div class="spinner-border text-primary" role="status"></div>
-                                    <div class="mt-2">Loading logs...</div>
+                                    <div class="mt-2">Loading logs from Supabase...</div>
                                 </td>
                             </tr>
                         </tbody>
@@ -201,7 +200,14 @@
     <script src="main.js"></script>
     <script>
         let currentPage = 1;
-        const perPage = 20;
+        const perPage = 15;
+
+        function formatDateTime(isoString) {
+            if (!isoString) return '--';
+            const d = new Date(isoString);
+            const pad = num => String(num).padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+        }
 
         window.addEventListener('DOMContentLoaded', async () => {
             if (!SupabaseDB.isLoggedIn()) {
@@ -221,7 +227,7 @@
         });
 
         function applyFilters(e) {
-            e.preventDefault();
+            if (e) e.preventDefault();
             currentPage = 1;
             loadLogs();
         }
@@ -240,7 +246,7 @@
 
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="7" class="text-center text-muted py-5">
+                    <td colspan="5" class="text-center text-muted py-5">
                         <div class="spinner-border text-primary" role="status"></div>
                         <div class="mt-2">Loading logs from Supabase...</div>
                     </td>
@@ -270,31 +276,26 @@
 
                 tbody.innerHTML = '';
                 if (!logs || logs.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No notification logs found.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No notification logs found.</td></tr>';
                     document.getElementById('paginationContainer').innerHTML = '';
                     return;
                 }
 
                 logs.forEach(log => {
                     let statusBadge = '';
-                    if (log.status === 'SUCCESS') statusBadge = '<span class="badge bg-success">SUCCESS</span>';
+                    if (log.status === 'SENT' || log.status === 'SUCCESS') statusBadge = '<span class="badge bg-success">SENT</span>';
                     else if (log.status === 'FAILED') statusBadge = '<span class="badge bg-danger">FAILED</span>';
                     else statusBadge = `<span class="badge bg-secondary">${log.status}</span>`;
 
-                    let typeBadge = '';
-                    if (log.notification_type === 'SMS') typeBadge = '<span class="badge bg-info">SMS</span>';
-                    else if (log.notification_type === 'EMAIL') typeBadge = '<span class="badge bg-primary">EMAIL</span>';
-                    else typeBadge = `<span class="badge bg-secondary">${log.notification_type}</span>`;
+                    const typeBadge = `<span class="badge bg-secondary">${log.notification_type || 'SMS'}</span>`;
 
                     tbody.innerHTML += `
                         <tr>
-                            <td class="ps-4 fw-semibold text-white-50">#${log.id}</td>
-                            <td><a href="violation-detail.html?id=${log.violation_id}" class="text-info fw-bold">Case #${log.violation_id}</a></td>
+                            <td class="ps-4 text-white-50">${formatDateTime(log.sent_at)}</td>
+                            <td><a href="violation-detail.html?id=${log.violation_id}" class="text-info fw-bold">#${log.violation_id}</a></td>
                             <td>${typeBadge}</td>
-                            <td>${log.recipient}</td>
-                            <td>${new Date(log.sent_at).toLocaleString()}</td>
+                            <td><small>${log.recipient}</small></td>
                             <td>${statusBadge}</td>
-                            <td class="small text-white-50">${log.error_message || '--'}</td>
                         </tr>
                     `;
                 });
@@ -303,7 +304,7 @@
                 renderPagination(totalPages, currentPage);
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Error loading data from Supabase.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Error loading data from Supabase.</td></tr>';
             }
         }
 
