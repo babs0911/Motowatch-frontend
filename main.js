@@ -91,10 +91,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="modal-body">
                         <p class="text-white-50 small mb-3">
-                            Upload a backup JSON file containing violation records to import into Supabase.
+                            Upload a PostgreSQL <code>.sql</code> dump or <code>.json</code> backup file to import into Supabase.
                         </p>
                         <div class="mb-3">
-                            <input type="file" class="form-control bg-dark text-white border-secondary" id="importFileInput" accept=".json">
+                            <input type="file" class="form-control bg-dark text-white border-secondary" id="importFileInput" accept=".sql,.json">
                         </div>
                         <div id="importStatusAlert" class="alert d-none py-2 small" role="alert"></div>
                     </div>
@@ -213,8 +213,8 @@ async function testTunnelConnection() {
     }
 }
 
-// Database Export / Import Handlers
-async function exportDatabaseJson(e) {
+// Database Export / Import Handlers (PostgreSQL .SQL & .JSON)
+async function exportDatabaseSql(e) {
     if (e) e.preventDefault();
     try {
         if (typeof SupabaseDB === 'undefined') {
@@ -222,23 +222,55 @@ async function exportDatabaseJson(e) {
             return;
         }
         const client = SupabaseDB.init();
-        const { data: violations } = await client.from('violations').select('*');
         const { data: violators } = await client.from('violators').select('*');
+        const { data: violations } = await client.from('violations').select('*');
         const { data: users } = await client.from('users').select('id, username, email, role, is_active, first_name, last_name');
         
-        const backupData = {
-            export_timestamp: new Date().toISOString(),
-            violations: violations || [],
-            violators: violators || [],
-            users: users || []
-        };
-        
-        const jsonStr = JSON.stringify(backupData, null, 2);
-        const blob = new Blob([jsonStr], { type: 'application/json' });
+        let sqlContent = `-- MotoWatch PostgreSQL Database Export\n`;
+        sqlContent += `-- Generated: ${new Date().toISOString()}\n\n`;
+
+        // 1. Violators
+        if (violators && violators.length > 0) {
+            sqlContent += `-- Data for Name: violators; Type: TABLE DATA\n`;
+            violators.forEach(row => {
+                const cols = Object.keys(row);
+                const vals = cols.map(c => {
+                    const v = row[c];
+                    if (v === null || v === undefined) return 'NULL';
+                    if (typeof v === 'number' || typeof v === 'boolean') return v;
+                    return `'${String(v).replace(/'/g, "''")}'`;
+                });
+                sqlContent += `INSERT INTO public.violators (${cols.join(', ')}) VALUES (${vals.join(', ')}) ON CONFLICT (id) DO NOTHING;\n`;
+            });
+            sqlContent += `\n`;
+        }
+
+        // 2. Violations
+        if (violations && violations.length > 0) {
+            sqlContent += `-- Data for Name: violations; Type: TABLE DATA\n`;
+            violations.forEach(row => {
+                const cols = Object.keys(row);
+                const vals = cols.map(c => {
+                    const v = row[c];
+                    if (v === null || v === undefined) return 'NULL';
+                    if (typeof v === 'number' || typeof v === 'boolean') return v;
+                    if (typeof v === 'object') return `'${JSON.stringify(v).replace(/'/g, "''")}'`;
+                    return `'${String(v).replace(/'/g, "''")}'`;
+                });
+                sqlContent += `INSERT INTO public.violations (${cols.join(', ')}) VALUES (${vals.join(', ')}) ON CONFLICT (id) DO NOTHING;\n`;
+            });
+            sqlContent += `\n`;
+        }
+
+        // 3. Sequences
+        sqlContent += `SELECT setval('violations_id_seq', (SELECT COALESCE(MAX(id), 1) FROM public.violations));\n`;
+        sqlContent += `SELECT setval('violators_id_seq', (SELECT COALESCE(MAX(id), 1) FROM public.violators));\n`;
+
+        const blob = new Blob([sqlContent], { type: 'text/sql' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `motowatch_backup_${new Date().toISOString().slice(0,10)}.json`;
+        a.download = `motowatch_dump_${new Date().toISOString().slice(0,10)}.sql`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -266,7 +298,7 @@ async function handleDatabaseImport() {
     if (!fileInput || !fileInput.files.length) {
         if (alertBox) {
             alertBox.className = 'alert alert-warning py-2 small';
-            alertBox.textContent = 'Please select a JSON backup file first.';
+            alertBox.textContent = 'Please select a .SQL or .JSON backup file first.';
             alertBox.classList.remove('d-none');
         }
         return;
@@ -282,15 +314,50 @@ async function handleDatabaseImport() {
 
     reader.onload = async function(e) {
         try {
-            const data = JSON.parse(e.target.result);
+            const content = e.target.result;
             if (typeof SupabaseDB === 'undefined') throw new Error('Supabase client unavailable');
             const client = SupabaseDB.init();
 
-            if (data.violators && data.violators.length) {
-                await client.from('violators').upsert(data.violators);
-            }
-            if (data.violations && data.violations.length) {
-                await client.from('violations').upsert(data.violations);
+            if (file.name.endsWith('.json')) {
+                const data = JSON.parse(content);
+                if (data.violators && data.violators.length) await client.from('violators').upsert(data.violators);
+                if (data.violations && data.violations.length) await client.from('violations').upsert(data.violations);
+            } else {
+                // Parse SQL INSERT statements
+                const insertRegex = /INSERT INTO public\.(\w+)\s*\(([^)]+)\)\s*VALUES\s*\(([^;]+)\)/gi;
+                let match;
+                let count = 0;
+
+                while ((match = insertRegex.exec(content)) !== null) {
+                    const table = match[1];
+                    const columns = match[2].split(',').map(c => c.trim().replace(/["`]/g, ''));
+                    // Parse values
+                    const rawVals = match[3];
+                    // Clean on conflict if present
+                    const valClean = rawVals.split(/ON CONFLICT/i)[0].trim();
+                    
+                    const rowObj = {};
+                    const valParts = valClean.match(/('(?:''|[^'])*'|NULL|\d+(?:\.\d+)?|true|false)/gi) || [];
+                    
+                    columns.forEach((col, idx) => {
+                        let v = valParts[idx];
+                        if (v === 'NULL' || v === undefined) {
+                            rowObj[col] = null;
+                        } else if (v.startsWith("'") && v.endsWith("'")) {
+                            rowObj[col] = v.slice(1, -1).replace(/''/g, "'");
+                            if (col === 'frame_images' || col === 'ocr_candidates') {
+                                try { rowObj[col] = JSON.parse(rowObj[col]); } catch(e){}
+                            }
+                        } else if (v === 'true') rowObj[col] = true;
+                        else if (v === 'false') rowObj[col] = false;
+                        else rowObj[col] = Number(v);
+                    });
+
+                    if (table === 'violations' || table === 'violators') {
+                        await client.from(table).upsert(rowObj);
+                        count++;
+                    }
+                }
             }
 
             if (alertBox) {
@@ -317,4 +384,9 @@ async function handleDatabaseImport() {
     };
     reader.readAsText(file);
 }
+
+// Backward compatibility aliases
+window.exportDatabaseJson = exportDatabaseSql;
+window.exportDatabaseSql = exportDatabaseSql;
+
 
