@@ -175,7 +175,7 @@
                                 <th>Date Detected</th>
                                 <th>Violation Type</th>
                                 <th>License Plate</th>
-                                <th>Source</th>
+                                <th>Location</th>
                                 <th>Status</th>
                                 <th class="text-center">Action</th>
                             </tr>
@@ -191,13 +191,26 @@
                     </table>
                 </div>
             </div>
+            <div class="card-footer bg-transparent border-0 py-4 d-flex justify-content-center">
+                <ul class="pagination pagination-sm mb-0" id="paginationContainer"></ul>
+            </div>
         </div>
-
-        <!-- Pagination -->
-        <nav aria-label="Page navigation" class="mb-5">
-            <ul class="pagination justify-content-center" id="paginationContainer"></ul>
-        </nav>
     </main>
+
+    <!-- Modal for Preview Gallery -->
+    <div class="modal fade" id="galleryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg" style="border-radius: 16px; overflow: hidden; background: #0b1522;">
+                <div class="modal-header border-0 pb-0">
+                    <h6 class="modal-title fw-bold text-white"><i class="bi bi-image me-2"></i> Evidence Snapshot</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <img src="" id="modalPreviewImg" class="img-fluid rounded-3 shadow" style="max-height: 500px; width: auto; object-fit: contain;">
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="footer mt-auto py-4" style="background: rgba(13, 27, 42, 0.95); border-top: 1px solid rgba(255,255,255,0.05);">
@@ -208,21 +221,6 @@
             </span>
         </div>
     </footer>
-
-    <!-- Gallery Preview Modal -->
-    <div class="modal fade" id="galleryModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
-            <div class="modal-content bg-dark border-secondary">
-                <div class="modal-header border-secondary text-white">
-                    <h5 class="modal-title">Evidence Media Viewer</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body text-center p-0 bg-black">
-                    <img id="modalPreviewImg" src="" class="img-fluid" style="max-height: 70vh;">
-                </div>
-            </div>
-        </div>
-    </div>
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
@@ -294,12 +292,13 @@
                     per_page: perPage,
                     status: status,
                     search: query,
+                    tab: currentTab,
                     sort: 'desc'
                 });
 
                 if (data.success) {
-                    document.getElementById('normalCount').textContent = data.total;
-                    document.getElementById('flaggedCount').textContent = 0;
+                    document.getElementById('normalCount').textContent = data.normal_count;
+                    document.getElementById('flaggedCount').textContent = data.flagged_count;
 
                     tbody.innerHTML = '';
                     if (data.violations.length === 0) {
@@ -315,8 +314,19 @@
                         else if (v.status === 'REJECTED') statusBadge = '<span class="badge badge-status-danger px-3 shadow-sm">REJECTED</span>';
                         else statusBadge = `<span class="badge badge-status-info px-3 shadow-sm">${v.status}</span>`;
 
-                        const formattedDate = new Date(v.detection_timestamp).toLocaleString();
-                        const rawImg = v.evidence_snapshot || v.annotated_file || v.source_file;
+                        // Format timestamp YYYY-MM-DD HH:MM
+                        let formattedDate = 'N/A';
+                        if (v.detection_timestamp) {
+                            const dt = new Date(v.detection_timestamp);
+                            formattedDate = dt.getFullYear() + '-' + 
+                                String(dt.getMonth() + 1).padStart(2, '0') + '-' + 
+                                String(dt.getDate()).padStart(2, '0') + ' ' + 
+                                String(dt.getHours()).padStart(2, '0') + ':' + 
+                                String(dt.getMinutes()).padStart(2, '0');
+                        }
+
+                        // Preview Image: Prioritize Plate Crop like original Motowatch UI
+                        const rawImg = v.plate_crop_file || v.plate_crop_raw_file || v.plate_crop_processed_file || v.evidence_snapshot || v.annotated_file || v.source_file;
                         const previewUrl = SupabaseDB.resolveImageUrl(rawImg);
 
                         const tr = document.createElement('tr');
@@ -336,7 +346,7 @@
                             <td>${formattedDate}</td>
                             <td>
                                 <span class="badge badge-type-danger px-3 shadow-sm">
-                                    ${v.violation_category || v.violation_class || 'Non-Compliant'}
+                                    ${v.violation_category || v.violation_class || 'NON-COMPLIANT'}
                                 </span>
                             </td>
                             <td>

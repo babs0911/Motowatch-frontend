@@ -154,13 +154,14 @@ const SupabaseDB = {
         }
     },
 
-    // 24/7 Cloud Violations List
-    async getViolations({ page = 1, per_page = 15, status = '', search = '', sort = 'desc' } = {}) {
+    // 24/7 Cloud Violations List with Tab Filtering (Normal vs Flagged)
+    async getViolations({ page = 1, per_page = 15, status = '', search = '', tab = 'normal', sort = 'desc' } = {}) {
         this.init();
         try {
+            // Fetch all records with violator info for client-side accurate tab sorting & pagination
             let query = this.client
                 .from('violations')
-                .select('id, violation_class, violation_category, confidence, detection_timestamp, plate_number, plate_confidence, status, location, source_file, annotated_file, evidence_snapshot', { count: 'exact' });
+                .select('id, violation_class, violation_category, confidence, detection_timestamp, plate_number, plate_confidence, status, location, source_file, annotated_file, evidence_snapshot, plate_crop_file, plate_crop_raw_file, plate_crop_processed_file, violator_id, violators(id, first_name, last_name, middle_name)');
 
             if (status && status !== 'ALL') {
                 query = query.eq('status', status);
@@ -172,24 +173,48 @@ const SupabaseDB = {
 
             query = query.order('detection_timestamp', { ascending: sort === 'asc' });
 
-            const from = (page - 1) * per_page;
-            const to = from + per_page - 1;
-            query = query.range(from, to);
-
-            const { data, count, error } = await query;
+            const { data: allViolations, error } = await query;
             if (error) throw error;
+
+            let normalList = [];
+            let flaggedList = [];
+
+            (allViolations || []).forEach(v => {
+                const isVerified = v.status === 'VERIFIED';
+                const hasPlate = v.plate_number && v.plate_number.trim() !== '' && !v.plate_number.toUpperCase().includes('N/A') && !v.plate_number.toUpperCase().includes('UNKNOWN');
+                const hasViolator = v.violator_id && v.violators && (!v.violators.middle_name || v.violators.middle_name !== 'Moto');
+
+                if (isVerified || (hasPlate && hasViolator)) {
+                    normalList.push(v);
+                } else {
+                    flaggedList.push(v);
+                }
+            });
+
+            const normal_count = normalList.length;
+            const flagged_count = flaggedList.length;
+
+            const targetList = tab === 'flagged' ? flaggedList : normalList;
+            const total = targetList.length;
+            const pages = Math.ceil(total / per_page) || 1;
+
+            const from = (page - 1) * per_page;
+            const to = from + per_page;
+            const pagedViolations = targetList.slice(from, to);
 
             return {
                 success: true,
-                violations: data || [],
-                total: count || 0,
+                violations: pagedViolations,
+                total,
+                normal_count,
+                flagged_count,
                 page,
                 per_page,
-                pages: Math.ceil((count || 0) / per_page)
+                pages
             };
         } catch (err) {
             console.error('Error fetching Supabase violations:', err);
-            return { success: false, error: err.message, violations: [], total: 0 };
+            return { success: false, error: err.message, violations: [], total: 0, normal_count: 0, flagged_count: 0 };
         }
     },
 
