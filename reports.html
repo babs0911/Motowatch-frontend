@@ -257,8 +257,11 @@
                         if (st === 'VERIFIED') verified++;
                         if (st === 'REJECTED') rejected++;
 
-                        // Type counts
-                        const cat = v.violation_category || v.violation_class || 'Non-Compliant';
+                        // Type counts (Separate No Helmet vs Nutshell sub-types)
+                        let cat = v.violation_category;
+                        if (!cat || cat === 'None' || cat === 'null') {
+                            cat = 'No Helmet';
+                        }
                         classBreakdown[cat] = (classBreakdown[cat] || 0) + 1;
 
                         // Daily counts

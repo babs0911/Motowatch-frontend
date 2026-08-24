@@ -45,7 +45,36 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.insertAdjacentHTML('beforeend', modalHtml);
     }
 
-    // 2. Add "AI Camera Settings" to any Admin Settings dropdown
+    // 2. Add "AI Camera Settings" and "Database Tools" to Tools / Admin dropdowns
+    const role = localStorage.getItem('user_role');
+    const toolsDropdowns = document.querySelectorAll('.nav-item.dropdown .dropdown-menu');
+    toolsDropdowns.forEach(menu => {
+        // Add Database Export and Import if user is Admin and in Tools dropdown
+        if (role === 'Admin' && menu.closest('.nav-item').textContent.includes('TOOLS') && !menu.querySelector('.db-export-item')) {
+            const divider = document.createElement('li');
+            divider.innerHTML = '<hr class="dropdown-divider border-secondary">';
+            menu.appendChild(divider);
+
+            const exportLi = document.createElement('li');
+            exportLi.className = 'db-export-item';
+            exportLi.innerHTML = `
+                <a class="dropdown-item py-2" href="#" onclick="exportDatabaseJson(event)">
+                    <i class="bi bi-download me-2 text-warning"></i> Export Database (JSON)
+                </a>
+            `;
+            menu.appendChild(exportLi);
+
+            const importLi = document.createElement('li');
+            importLi.className = 'db-import-item';
+            importLi.innerHTML = `
+                <a class="dropdown-item py-2" href="#" onclick="openImportDbModal(event)">
+                    <i class="bi bi-upload me-2 text-success"></i> Import Database
+                </a>
+            `;
+            menu.appendChild(importLi);
+        }
+    });
+
     const settingsDropdowns = document.querySelectorAll('#adminSettingsDropdown .dropdown-menu');
     settingsDropdowns.forEach(menu => {
         if (!menu.querySelector('.ai-tunnel-menu-item')) {
@@ -59,6 +88,39 @@ document.addEventListener('DOMContentLoaded', function() {
             menu.appendChild(li);
         }
     });
+
+    // 2b. Inject Import Database Modal if not present
+    if (!document.getElementById('importDbModal')) {
+        const importModalHtml = `
+        <div class="modal fade" id="importDbModal" tabindex="-1" aria-labelledby="importDbModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content bg-dark text-white border-secondary shadow-lg" style="border-radius:16px;">
+                    <div class="modal-header border-secondary">
+                        <h5 class="modal-title" id="importDbModalLabel">
+                            <i class="bi bi-upload me-2 text-success"></i> Import Database (Cloud Supabase)
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-white-50 small mb-3">
+                            Upload a backup JSON file containing violation records to import into Supabase.
+                        </p>
+                        <div class="mb-3">
+                            <input type="file" class="form-control bg-dark text-white border-secondary" id="importFileInput" accept=".json">
+                        </div>
+                        <div id="importStatusAlert" class="alert d-none py-2 small" role="alert"></div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-success btn-sm px-3" id="importSubmitBtn" onclick="handleDatabaseImport()">
+                            <i class="bi bi-upload me-1"></i> Start Import
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend', importModalHtml);
+    }
 
     // 3. File input validation
     const fileInputs = document.querySelectorAll('input[type="file"]');
@@ -162,3 +224,109 @@ async function testTunnelConnection() {
         if (testBtn) testBtn.innerHTML = '<i class="bi bi-broadcast me-1"></i> Test Connection';
     }
 }
+
+// Database Export / Import Handlers
+async function exportDatabaseJson(e) {
+    if (e) e.preventDefault();
+    try {
+        if (typeof SupabaseDB === 'undefined') {
+            alert('Supabase client not loaded.');
+            return;
+        }
+        const client = SupabaseDB.init();
+        const { data: violations } = await client.from('violations').select('*');
+        const { data: violators } = await client.from('violators').select('*');
+        const { data: users } = await client.from('users').select('id, username, email, role, is_active, first_name, last_name');
+        
+        const backupData = {
+            export_timestamp: new Date().toISOString(),
+            violations: violations || [],
+            violators: violators || [],
+            users: users || []
+        };
+        
+        const jsonStr = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `motowatch_backup_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (err) {
+        console.error('Export error:', err);
+        alert('Failed to export database: ' + err.message);
+    }
+}
+
+function openImportDbModal(e) {
+    if (e) e.preventDefault();
+    const modalEl = document.getElementById('importDbModal');
+    if (modalEl && typeof bootstrap !== 'undefined') {
+        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+        modal.show();
+    }
+}
+
+async function handleDatabaseImport() {
+    const fileInput = document.getElementById('importFileInput');
+    const alertBox = document.getElementById('importStatusAlert');
+    const submitBtn = document.getElementById('importSubmitBtn');
+    
+    if (!fileInput || !fileInput.files.length) {
+        if (alertBox) {
+            alertBox.className = 'alert alert-warning py-2 small';
+            alertBox.textContent = 'Please select a JSON backup file first.';
+            alertBox.classList.remove('d-none');
+        }
+        return;
+    }
+
+    const file = fileInput.files[0];
+    const reader = new FileReader();
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Importing...';
+    }
+
+    reader.onload = async function(e) {
+        try {
+            const data = JSON.parse(e.target.result);
+            if (typeof SupabaseDB === 'undefined') throw new Error('Supabase client unavailable');
+            const client = SupabaseDB.init();
+
+            if (data.violators && data.violators.length) {
+                await client.from('violators').upsert(data.violators);
+            }
+            if (data.violations && data.violations.length) {
+                await client.from('violations').upsert(data.violations);
+            }
+
+            if (alertBox) {
+                alertBox.className = 'alert alert-success py-2 small';
+                alertBox.innerHTML = '<i class="bi bi-check-circle me-1"></i> Database imported successfully!';
+                alertBox.classList.remove('d-none');
+            }
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        } catch (err) {
+            console.error('Import error:', err);
+            if (alertBox) {
+                alertBox.className = 'alert alert-danger py-2 small';
+                alertBox.textContent = 'Import failed: ' + err.message;
+                alertBox.classList.remove('d-none');
+            }
+        } finally {
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-upload me-1"></i> Start Import';
+            }
+        }
+    };
+    reader.readAsText(file);
+}
+
