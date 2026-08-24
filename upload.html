@@ -188,29 +188,26 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="supabase-db.js"></script>
     <script src="main.js"></script>
     <script>
-        const backendUrl = Config.getBackendUrl();
+        const workerUrl = Config.getAiWorkerUrl();
         const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
 
         window.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'USER';
-            
-            const role = localStorage.getItem('user_role');
-            if (role === 'Admin') {
-                document.getElementById('adminSettingsDropdown').classList.remove('d-none');
+            if (!SupabaseDB.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
             }
 
-            try {
-                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
-                if (!data.authenticated) {
-                    window.location.href = 'login.html';
-                }
-            } catch (err) {
-                console.error(err);
-                window.location.href = 'login.html';
+            const currentUser = SupabaseDB.getCurrentUser();
+            document.getElementById('usernameDisplay').textContent = currentUser.username.toUpperCase();
+            
+            if (currentUser.role === 'Admin') {
+                const settingsDropdown = document.getElementById('adminSettingsDropdown');
+                if (settingsDropdown) settingsDropdown.classList.remove('d-none');
             }
         });
 

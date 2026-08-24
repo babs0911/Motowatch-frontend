@@ -192,31 +192,29 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="supabase-db.js"></script>
+    <script src="main.js"></script>
     <script>
-        const backendUrl = Config.getBackendUrl();
         let currentPage = 1;
+        const perPage = 20;
 
         window.addEventListener('DOMContentLoaded', async () => {
-            document.getElementById('usernameDisplay').textContent = localStorage.getItem('user_name') || 'USER';
-            
-            const role = localStorage.getItem('user_role');
-            if (role === 'Admin') {
-                document.getElementById('adminSettingsDropdown').classList.remove('d-none');
+            if (!SupabaseDB.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
             }
 
-            try {
-                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
-                if (!data.authenticated) {
-                    window.location.href = 'login.html';
-                } else {
-                    loadLogs();
-                }
-            } catch (err) {
-                console.error(err);
-                window.location.href = 'login.html';
+            const currentUser = SupabaseDB.getCurrentUser();
+            document.getElementById('usernameDisplay').textContent = currentUser.username.toUpperCase();
+            
+            if (currentUser.role === 'Admin') {
+                const settingsDropdown = document.getElementById('adminSettingsDropdown');
+                if (settingsDropdown) settingsDropdown.classList.remove('d-none');
             }
+
+            loadLogs();
         });
 
         function applyFilters(e) {
@@ -241,57 +239,68 @@
                 <tr>
                     <td colspan="7" class="text-center text-muted py-5">
                         <div class="spinner-border text-primary" role="status"></div>
-                        <div class="mt-2">Loading logs...</div>
+                        <div class="mt-2">Loading logs from Supabase...</div>
                     </td>
                 </tr>
             `;
 
             try {
-                const url = new URL(`${backendUrl}/notifications/api/list`);
-                url.searchParams.append('page', currentPage);
-                if (status !== 'ALL') url.searchParams.append('status', status);
-                if (type !== 'ALL') url.searchParams.append('type', type);
+                let query = SupabaseDB.init()
+                    .from('notification_logs')
+                    .select('*', { count: 'exact' });
 
-                const res = await fetch(url.toString(), { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
-
-                if (data.success) {
-                    tbody.innerHTML = '';
-                    if (data.logs.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No notification logs found.</td></tr>';
-                        document.getElementById('paginationContainer').innerHTML = '';
-                        return;
-                    }
-
-                    data.logs.forEach(log => {
-                        let statusBadge = '';
-                        if (log.status === 'SUCCESS') statusBadge = '<span class="badge bg-success">SUCCESS</span>';
-                        else if (log.status === 'FAILED') statusBadge = '<span class="badge bg-danger">FAILED</span>';
-                        else statusBadge = `<span class="badge bg-secondary">${log.status}</span>`;
-
-                        let typeBadge = '';
-                        if (log.notification_type === 'SMS') typeBadge = '<span class="badge bg-info">SMS</span>';
-                        else if (log.notification_type === 'EMAIL') typeBadge = '<span class="badge bg-primary">EMAIL</span>';
-                        else typeBadge = `<span class="badge bg-secondary">${log.notification_type}</span>`;
-
-                        tbody.innerHTML += `
-                            <tr>
-                                <td class="ps-4 fw-semibold text-white-50">#${log.id}</td>
-                                <td><a href="violation-detail.html?id=${log.violation_id}" class="text-info fw-bold">Case #${log.violation_id}</a></td>
-                                <td>${typeBadge}</td>
-                                <td>${log.recipient}</td>
-                                <td>${new Date(log.sent_at).toLocaleString()}</td>
-                                <td>${statusBadge}</td>
-                                <td class="small text-white-50">${log.error_message || '--'}</td>
-                            </tr>
-                        `;
-                    });
-
-                    renderPagination(data.pages, data.current_page);
+                if (status !== 'ALL') {
+                    query = query.eq('status', status);
                 }
+                if (type !== 'ALL') {
+                    query = query.eq('notification_type', type);
+                }
+
+                query = query.order('sent_at', { ascending: false });
+
+                const from = (currentPage - 1) * perPage;
+                const to = from + perPage - 1;
+                query = query.range(from, to);
+
+                const { data: logs, count, error } = await query;
+                if (error) throw error;
+
+                tbody.innerHTML = '';
+                if (!logs || logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-4">No notification logs found.</td></tr>';
+                    document.getElementById('paginationContainer').innerHTML = '';
+                    return;
+                }
+
+                logs.forEach(log => {
+                    let statusBadge = '';
+                    if (log.status === 'SUCCESS') statusBadge = '<span class="badge bg-success">SUCCESS</span>';
+                    else if (log.status === 'FAILED') statusBadge = '<span class="badge bg-danger">FAILED</span>';
+                    else statusBadge = `<span class="badge bg-secondary">${log.status}</span>`;
+
+                    let typeBadge = '';
+                    if (log.notification_type === 'SMS') typeBadge = '<span class="badge bg-info">SMS</span>';
+                    else if (log.notification_type === 'EMAIL') typeBadge = '<span class="badge bg-primary">EMAIL</span>';
+                    else typeBadge = `<span class="badge bg-secondary">${log.notification_type}</span>`;
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="ps-4 fw-semibold text-white-50">#${log.id}</td>
+                            <td><a href="violation-detail.html?id=${log.violation_id}" class="text-info fw-bold">Case #${log.violation_id}</a></td>
+                            <td>${typeBadge}</td>
+                            <td>${log.recipient}</td>
+                            <td>${new Date(log.sent_at).toLocaleString()}</td>
+                            <td>${statusBadge}</td>
+                            <td class="small text-white-50">${log.error_message || '--'}</td>
+                        </tr>
+                    `;
+                });
+
+                const totalPages = Math.ceil((count || 0) / perPage);
+                renderPagination(totalPages, currentPage);
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Error loading data from server.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Error loading data from Supabase.</td></tr>';
             }
         }
 
@@ -324,15 +333,8 @@
             loadLogs();
         }
 
-        async function handleLogout() {
-            try {
-                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
-            } catch (err) {
-                console.error(err);
-            }
-            localStorage.removeItem('user_name');
-            localStorage.removeItem('user_role');
-            window.location.href = 'login.html';
+        function handleLogout() {
+            SupabaseDB.logout();
         }
     </script>
 </body>

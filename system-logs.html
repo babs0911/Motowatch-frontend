@@ -160,34 +160,30 @@
 
     <!-- Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="supabase-db.js"></script>
+    <script src="main.js"></script>
     <script>
-        const backendUrl = Config.getBackendUrl();
         let currentPage = 1;
+        const perPage = 20;
 
         window.addEventListener('DOMContentLoaded', async () => {
-            const username = localStorage.getItem('user_name') || 'USER';
-            document.getElementById('usernameDisplay').textContent = username;
+            if (!SupabaseDB.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const currentUser = SupabaseDB.getCurrentUser();
+            document.getElementById('usernameDisplay').textContent = currentUser.username.toUpperCase();
             
-            const role = localStorage.getItem('user_role');
-            if (role !== 'Admin') {
+            if (currentUser.role !== 'Admin') {
                 alert('Access Denied: Admin role required.');
                 window.location.href = 'portal.html';
                 return;
             }
 
-            try {
-                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
-                if (!data.authenticated) {
-                    window.location.href = 'login.html';
-                } else {
-                    loadLogs();
-                }
-            } catch (err) {
-                console.error(err);
-                window.location.href = 'login.html';
-            }
+            loadLogs();
         });
 
         async function loadLogs() {
@@ -196,47 +192,51 @@
                 <tr>
                     <td colspan="5" class="text-center text-muted py-5">
                         <div class="spinner-border text-primary" role="status"></div>
-                        <div class="mt-2">Loading audit trail...</div>
+                        <div class="mt-2">Loading audit trail from Supabase...</div>
                     </td>
                 </tr>
             `;
 
             try {
-                const url = new URL(`${backendUrl}/admin/api/logs`);
-                url.searchParams.append('page', currentPage);
+                const from = (currentPage - 1) * perPage;
+                const to = from + perPage - 1;
 
-                const res = await fetch(url.toString(), { mode: 'cors', credentials: 'include' });
-                const data = await res.json();
+                const { data: logs, count, error } = await SupabaseDB.init()
+                    .from('audit_logs')
+                    .select('*', { count: 'exact' })
+                    .order('timestamp', { ascending: false })
+                    .range(from, to);
 
-                if (data.success) {
-                    tbody.innerHTML = '';
-                    if (data.logs.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No audit logs found.</td></tr>';
-                        document.getElementById('paginationContainer').innerHTML = '';
-                        return;
-                    }
+                if (error) throw error;
 
-                    data.logs.forEach(log => {
-                        const changeStr = (log.old_value && log.new_value) ? 
-                            `<span class="small text-white-50">${log.old_value} → ${log.new_value}</span>` : 
-                            `<span class="small text-white-50">${log.new_value || '--'}</span>`;
-
-                        tbody.innerHTML += `
-                            <tr>
-                                <td class="ps-4 text-white-50 small">${new Date(log.timestamp).toLocaleString()}</td>
-                                <td class="fw-bold">${log.user}</td>
-                                <td><span class="badge bg-secondary">${log.action}</span></td>
-                                <td>${changeStr}</td>
-                                <td>${log.notes || '--'}</td>
-                            </tr>
-                        `;
-                    });
-
-                    renderPagination(data.pages, data.current_page);
+                tbody.innerHTML = '';
+                if (!logs || logs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No audit logs found.</td></tr>';
+                    document.getElementById('paginationContainer').innerHTML = '';
+                    return;
                 }
+
+                logs.forEach(log => {
+                    const changeStr = (log.old_value && log.new_value) ? 
+                        `<span class="badge bg-secondary">${log.old_value}</span> <i class="bi bi-arrow-right"></i> <span class="badge bg-primary">${log.new_value}</span>` : 
+                        '<span class="text-muted">--</span>';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="ps-4 text-white-50 small">${new Date(log.timestamp).toLocaleString()}</td>
+                            <td class="fw-bold">${log.user || 'System'}</td>
+                            <td><span class="badge bg-info">${log.action}</span></td>
+                            <td>${changeStr}</td>
+                            <td class="small text-white-50">${log.notes || '--'}</td>
+                        </tr>
+                    `;
+                });
+
+                const totalPages = Math.ceil((count || 0) / perPage);
+                renderPagination(totalPages, currentPage);
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Failed to load audit logs.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger py-4">Error loading audit logs from Supabase.</td></tr>';
             }
         }
 
@@ -269,15 +269,8 @@
             loadLogs();
         }
 
-        async function handleLogout() {
-            try {
-                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
-            } catch (err) {
-                console.error(err);
-            }
-            localStorage.removeItem('user_name');
-            localStorage.removeItem('user_role');
-            window.location.href = 'login.html';
+        function handleLogout() {
+            SupabaseDB.logout();
         }
     </script>
 </body>

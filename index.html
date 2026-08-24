@@ -3,20 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <title>Redirecting...</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="config.js"></script>
+    <script src="supabase-db.js"></script>
     <script>
-        window.addEventListener('DOMContentLoaded', async () => {
-            const backendUrl = Config.getBackendUrl();
-            try {
-                const res = await fetch(`${backendUrl}/auth/api/session`, { mode: 'cors' });
-                const data = await res.json();
-                if (data.authenticated) {
-                    window.location.href = 'portal.html';
-                } else {
-                    window.location.href = 'login.html';
-                }
-            } catch (err) {
-                console.error('Connection failed:', err);
+        window.addEventListener('DOMContentLoaded', () => {
+            if (SupabaseDB.isLoggedIn()) {
+                window.location.href = 'portal.html';
+            } else {
                 window.location.href = 'login.html';
             }
         });
