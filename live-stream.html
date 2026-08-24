@@ -197,6 +197,29 @@
             }
         });
 
+        let socket;
+
+        // Handle tab visibility changes to stop streaming when inactive
+        document.addEventListener('visibilitychange', () => {
+            if (socket) {
+                if (document.hidden) {
+                    console.log('Livestream tab hidden, disconnecting socket...');
+                    socket.emit('stop_livestream');
+                    socket.disconnect();
+                } else {
+                    console.log('Livestream tab visible, reconnecting socket...');
+                    socket.connect();
+                }
+            }
+        });
+
+        // Emit stop on page unload
+        window.addEventListener('beforeunload', () => {
+            if (socket) {
+                socket.emit('stop_livestream');
+            }
+        });
+
         function startSocketStream() {
             const canvas = document.getElementById('liveCanvas');
             const ctx = canvas.getContext('2d', { alpha: false });
@@ -206,7 +229,7 @@
             const connectionBadge = document.getElementById('connectionBadge');
             
             // Connect to Cloudflare Tunnel WebSocket server
-            const socket = io(backendUrl, {
+            socket = io(backendUrl, {
                 transports: ['websocket']
             });
 
@@ -215,6 +238,7 @@
                 connectionBadge.textContent = 'CONNECTED';
                 connectionBadge.className = 'badge bg-success me-3';
                 statusMessage.textContent = 'Streaming live frames...';
+                socket.emit('start_livestream');
             });
 
             socket.on('disconnect', () => {
