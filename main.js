@@ -57,35 +57,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const adminDropdown = document.getElementById('adminSettingsDropdown');
             if (adminDropdown) adminDropdown.classList.remove('d-none');
         }
-
-        const toolsMenus = document.querySelectorAll('.nav-item.dropdown .dropdown-menu');
-        toolsMenus.forEach(menu => {
-            const navText = menu.closest('.nav-item')?.textContent?.toUpperCase() || '';
-            if (navText.includes('TOOLS') && !menu.querySelector('.db-export-item')) {
-                const divider = document.createElement('li');
-                divider.className = isAdmin ? 'admin-db-tool' : 'admin-db-tool d-none';
-                divider.innerHTML = '<hr class="dropdown-divider border-secondary">';
-                menu.appendChild(divider);
-
-                const exportLi = document.createElement('li');
-                exportLi.className = isAdmin ? 'db-export-item admin-db-tool' : 'db-export-item admin-db-tool d-none';
-                exportLi.innerHTML = `
-                    <a class="dropdown-item py-2" href="#" onclick="exportDatabaseJson(event)">
-                        <i class="bi bi-download me-2 text-warning"></i> Export Database (JSON)
-                    </a>
-                `;
-                menu.appendChild(exportLi);
-
-                const importLi = document.createElement('li');
-                importLi.className = isAdmin ? 'db-import-item admin-db-tool' : 'db-import-item admin-db-tool d-none';
-                importLi.innerHTML = `
-                    <a class="dropdown-item py-2" href="#" onclick="openImportDbModal(event)">
-                        <i class="bi bi-upload me-2 text-success"></i> Import Database
-                    </a>
-                `;
-                menu.appendChild(importLi);
-            }
-        });
     }
 
     setupAdminMenuItems();
