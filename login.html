@@ -251,6 +251,15 @@
             const password = document.getElementById('password').value;
             const backendUrl = Config.getBackendUrl();
 
+            if (!backendUrl) {
+                alertBox.innerHTML = '<i class="bi bi-exclamation-triangle me-1"></i> Backend URL is not set. Click the <strong>gear icon (⚙️)</strong> at the top right to configure your Cloudflare Tunnel or local server URL.';
+                alertBox.classList.remove('d-none');
+                submitBtn.disabled = false;
+                btnText.classList.remove('d-none');
+                btnSpinner.classList.add('d-none');
+                return;
+            }
+
             try {
                 const res = await fetch(`${backendUrl}/auth/api/login`, {
                     method: 'POST',
@@ -265,17 +274,27 @@
 
                 const data = await res.json();
                 
-                if (data.success) {
+                if (data && data.success) {
                     localStorage.setItem('user_name', data.user.username);
                     localStorage.setItem('user_role', data.user.role);
                     window.location.href = 'portal.html';
                 } else {
-                    alertBox.textContent = data.error || 'Invalid credentials';
+                    let errMsg = 'Invalid credentials';
+                    if (data && data.error) {
+                        if (typeof data.error === 'string') {
+                            errMsg = data.error;
+                        } else if (data.error.message) {
+                            errMsg = data.error.message;
+                        } else {
+                            errMsg = JSON.stringify(data.error);
+                        }
+                    }
+                    alertBox.textContent = errMsg;
                     alertBox.classList.remove('d-none');
                 }
             } catch (err) {
                 console.error(err);
-                alertBox.textContent = 'Could not connect to backend server. Make sure it is running and the URL is correct.';
+                alertBox.innerHTML = '<i class="bi bi-exclamation-circle me-1"></i> Could not connect to backend server. Make sure your local server/tunnel is active and the URL in settings (⚙️) is correct.';
                 alertBox.classList.remove('d-none');
             } finally {
                 submitBtn.disabled = false;
