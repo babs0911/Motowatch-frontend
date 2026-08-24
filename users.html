@@ -94,13 +94,18 @@
 
     <!-- Main Content -->
     <main class="container my-4 flex-grow-1" style="position: relative;">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 style="font-family: 'Montserrat', sans-serif; font-weight: 800; letter-spacing: 1px;">
-                <i class="bi bi-people"></i> User Management
-            </h1>
-            <a href="user-form.html" class="btn btn-primary btn-sm rounded-pill shadow-sm px-3">
-                <i class="bi bi-person-plus"></i> Add Validator
-            </a>
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-8">
+                <h1 style="font-family: 'Montserrat', sans-serif; font-weight: 800; letter-spacing: 1px;">
+                    <i class="bi bi-people-fill"></i> Manage Validators
+                </h1>
+                <p class="text-white-50">Create and manage access for system validators and administrators.</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="user-form.html" class="btn btn-primary rounded-pill shadow-sm">
+                    <i class="bi bi-person-plus-fill"></i> Add New Validator
+                </a>
+            </div>
         </div>
 
         <div id="alertBox" class="alert alert-dismissible d-none" role="alert"></div>
@@ -112,21 +117,20 @@
                     <table class="table table-hover align-middle mb-0">
                         <thead>
                             <tr>
-                                <th class="ps-4">ID</th>
+                                <th class="ps-4">Name</th>
                                 <th>Username</th>
                                 <th>Email</th>
-                                <th>First Name</th>
-                                <th>Last Name</th>
                                 <th>Role</th>
                                 <th>Status</th>
-                                <th class="text-center">Action</th>
+                                <th>Joined</th>
+                                <th class="text-end pe-4">Actions</th>
                             </tr>
                         </thead>
                         <tbody id="usersTableBody">
                             <tr>
-                                <td colspan="8" class="text-center text-muted py-5">
+                                <td colspan="7" class="text-center text-muted py-5">
                                     <div class="spinner-border text-primary" role="status"></div>
-                                    <div class="mt-2">Loading users...</div>
+                                    <div class="mt-2">Loading users from Supabase...</div>
                                 </td>
                             </tr>
                         </tbody>
@@ -175,40 +179,50 @@
             try {
                 const { data: users, error } = await SupabaseDB.init()
                     .from('users')
-                    .select('id, username, email, first_name, last_name, role, is_active')
+                    .select('id, username, email, first_name, last_name, role, is_active, created_at')
                     .order('id', { ascending: true });
 
                 if (!error && users) {
                     tbody.innerHTML = '';
                     users.forEach(user => {
+                        const fullName = `${user.first_name || ''} ${user.last_name || ''}`.trim();
+                        const nameDisplay = fullName ? `<strong>${fullName}</strong>` : `<span class="text-white-50 fst-italic small">No name provided</span>`;
+                        
                         const statusBadge = user.is_active ? 
                             '<span class="badge bg-success">ACTIVE</span>' : 
                             '<span class="badge bg-danger">INACTIVE</span>';
                             
-                        const actionBtn = user.is_active ?
-                            `<button class="btn btn-sm btn-outline-danger" onclick="toggleUser(${user.id}, false)">Deactivate</button>` :
-                            `<button class="btn btn-sm btn-outline-success" onclick="toggleUser(${user.id}, true)">Activate</button>`;
+                        const roleBadge = user.role === 'Admin' ? 
+                            '<span class="badge bg-info">ADMIN</span>' : 
+                            '<span class="badge bg-secondary">VALIDATOR</span>';
+
+                        const joinedDate = user.created_at ? user.created_at.slice(0, 10) : '2026-04-24';
+                        
+                        let actionBtn = '';
+                        if (user.role === 'Admin' || user.username === 'admin') {
+                            actionBtn = `<button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Administrator accounts cannot be deactivated"><i class="bi bi-shield-lock me-1"></i> Protected</button>`;
+                        } else if (user.is_active) {
+                            actionBtn = `<button class="btn btn-sm btn-outline-danger" onclick="toggleUser(${user.id}, false)"><i class="bi bi-person-dash me-1"></i> Deactivate</button>`;
+                        } else {
+                            actionBtn = `<button class="btn btn-sm btn-outline-success" onclick="toggleUser(${user.id}, true)"><i class="bi bi-person-check me-1"></i> Activate</button>`;
+                        }
                         
                         tbody.innerHTML += `
-                            <tr>
-                                <td class="ps-4 fw-semibold text-white-50">#${user.id}</td>
+                            <tr class="${!user.is_active ? 'opacity-50' : ''}">
+                                <td class="ps-4">${nameDisplay}</td>
                                 <td class="fw-bold">${user.username}</td>
                                 <td>${user.email}</td>
-                                <td>${user.first_name || '--'}</td>
-                                <td>${user.last_name || '--'}</td>
-                                <td><span class="badge bg-info">${user.role}</span></td>
+                                <td>${roleBadge}</td>
                                 <td>${statusBadge}</td>
-                                <td class="text-center pe-4">
-                                    <a href="user-form.html?id=${user.id}" class="btn btn-sm btn-outline-primary me-2"><i class="bi bi-pencil"></i></a>
-                                    ${actionBtn}
-                                </td>
+                                <td>${joinedDate}</td>
+                                <td class="text-end pe-4">${actionBtn}</td>
                             </tr>
                         `;
                     });
                 }
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center text-danger py-4">Error loading users from Supabase.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Error loading users from Supabase.</td></tr>';
             }
         }
 
