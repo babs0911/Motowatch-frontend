@@ -187,14 +187,14 @@ const SupabaseDB = {
                     query = query.or(`plate_number.ilike.%${search}%,violation_category.ilike.%${search}%,location.ilike.%${search}%`);
                 }
 
-                query = query
-                    .order('detection_timestamp', { ascending: sort === 'asc' })
-                    .order('id', { ascending: sort === 'asc' });
+                query = query.order('id', { ascending: sort === 'asc' });
 
                 const { data, error } = await query;
                 if (error) throw error;
 
                 allViolations = data || [];
+                allViolations.sort((a, b) => sort === 'asc' ? a.id - b.id : b.id - a.id);
+
                 if (!search) {
                     this._cache.violations = allViolations;
                     this._cache.timestamp = now;
