@@ -411,29 +411,44 @@
                             initCarouselThumbs();
                         }
                     } else {
-                        // Fallback single image
-                        let rawImg = v.evidence_snapshot || v.annotated_file || v.source_file;
-                        let imgUrl = SupabaseDB.resolveImageUrl(rawImg);
-                        let captionText = v.evidence_snapshot ? 'Evidence Snapshot' : 'Annotated Detection';
+                        // Single frame / Upload image detections:
+                        // Prioritize the full scene annotated detection frame & camera snapshot
+                        let slides = [];
+                        if (v.annotated_file) {
+                            slides.push({ url: SupabaseDB.resolveImageUrl(v.annotated_file), caption: 'Annotated Detection' });
+                        }
+                        if (v.source_file && v.source_file !== v.annotated_file) {
+                            slides.push({ url: SupabaseDB.resolveImageUrl(v.source_file), caption: 'Camera Snapshot' });
+                        }
+                        if (v.evidence_snapshot && v.evidence_snapshot !== v.annotated_file && v.evidence_snapshot !== v.source_file && !v.evidence_snapshot.includes('plate')) {
+                            slides.push({ url: SupabaseDB.resolveImageUrl(v.evidence_snapshot), caption: 'Evidence Snapshot' });
+                        }
+                        if (slides.length === 0) {
+                            const fallback = v.annotated_file || v.source_file || v.evidence_snapshot || v.plate_crop_raw_file;
+                            if (fallback) slides.push({ url: SupabaseDB.resolveImageUrl(fallback), caption: 'Detection Media' });
+                        }
 
-                        if (imgUrl) {
-                            carouselInner.innerHTML = `
-                                <div class="carousel-item active">
-                                    <img src="${imgUrl}" class="d-block w-100" alt="Annotated">
-                                    <div class="carousel-caption d-none d-md-block bg-dark bg-opacity-50 rounded">
-                                        <p>${captionText}</p>
+                        if (slides.length > 0) {
+                            slides.forEach((s, idx) => {
+                                carouselInner.innerHTML += `
+                                    <div class="carousel-item ${idx === 0 ? 'active' : ''}">
+                                        <img src="${s.url}" class="d-block mx-auto" alt="${s.caption}" style="max-height:460px;max-width:100%;object-fit:contain;">
+                                        <div class="carousel-caption d-none d-md-block" style="bottom:8px;">
+                                            <span class="badge bg-dark bg-opacity-75">${s.caption}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            `;
+                                `;
+                            });
                         } else {
                             carouselInner.innerHTML = `<div class="carousel-item active text-center py-5 text-muted">No media files available.</div>`;
                         }
                     }
 
-                    // Snapshot evidence below carousel
-                    if (v.evidence_snapshot) {
+                    // License plate evidence items below carousel
+                    const evPlate = v.plate_crop_file || v.plate_crop_raw_file || (v.evidence_snapshot && v.evidence_snapshot.includes('plate') ? v.evidence_snapshot : null);
+                    if (evPlate) {
                         document.getElementById('snapshotCropCol').classList.remove('d-none');
-                        document.getElementById('evidenceSnapshotImg').src = SupabaseDB.resolveImageUrl(v.evidence_snapshot);
+                        document.getElementById('evidenceSnapshotImg').src = SupabaseDB.resolveImageUrl(evPlate);
                     }
                     const rawCrop = v.plate_crop_raw_file || v.plate_crop_file;
                     if (rawCrop) {
