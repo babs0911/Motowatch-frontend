@@ -154,32 +154,55 @@ const SupabaseDB = {
         }
     },
 
-    // 24/7 Cloud Violations List with Tab Filtering (Normal vs Flagged)
-    async getViolations({ page = 1, per_page = 15, status = '', search = '', tab = 'normal', sort = 'desc' } = {}) {
+    // Cache storage for instant pagination and 0ms tab switching
+    _cache: {
+        violations: null,
+        timestamp: 0,
+        ttl: 15000 // 15 seconds cache lifetime
+    },
+
+    invalidateCache() {
+        this._cache.violations = null;
+        this._cache.timestamp = 0;
+    },
+
+    // 24/7 Cloud Violations List with Intelligent Caching & Tab Filtering (Normal vs Flagged)
+    async getViolations({ page = 1, per_page = 15, status = '', search = '', tab = 'normal', sort = 'desc', forceRefresh = false } = {}) {
         this.init();
         try {
-            // Fetch all records with violator info for client-side accurate tab sorting & pagination
-            let query = this.client
-                .from('violations')
-                .select('id, violation_class, violation_category, confidence, detection_timestamp, plate_number, plate_confidence, status, location, source_file, annotated_file, evidence_snapshot, plate_crop_file, plate_crop_raw_file, plate_crop_processed_file, violator_id, violators(id, first_name, last_name, middle_name)');
+            const now = Date.now();
+            let allViolations = this._cache.violations;
 
-            if (status && status !== 'ALL') {
-                query = query.eq('status', status);
+            // Only fetch from Supabase if cache is expired or force refreshed
+            if (!allViolations || (now - this._cache.timestamp > this._cache.ttl) || forceRefresh || search) {
+                let query = this.client
+                    .from('violations')
+                    .select('id, violation_class, violation_category, confidence, detection_timestamp, plate_number, plate_confidence, status, location, source_file, annotated_file, evidence_snapshot, plate_crop_file, plate_crop_raw_file, plate_crop_processed_file, violator_id, violators(id, first_name, last_name, middle_name)');
+
+                if (status && status !== 'ALL') {
+                    query = query.eq('status', status);
+                }
+
+                if (search) {
+                    query = query.or(`plate_number.ilike.%${search}%,violation_category.ilike.%${search}%,location.ilike.%${search}%`);
+                }
+
+                query = query.order('detection_timestamp', { ascending: sort === 'asc' });
+
+                const { data, error } = await query;
+                if (error) throw error;
+
+                allViolations = data || [];
+                if (!search) {
+                    this._cache.violations = allViolations;
+                    this._cache.timestamp = now;
+                }
             }
-
-            if (search) {
-                query = query.or(`plate_number.ilike.%${search}%,violation_category.ilike.%${search}%,location.ilike.%${search}%`);
-            }
-
-            query = query.order('detection_timestamp', { ascending: sort === 'asc' });
-
-            const { data: allViolations, error } = await query;
-            if (error) throw error;
 
             let normalList = [];
             let flaggedList = [];
 
-            (allViolations || []).forEach(v => {
+            allViolations.forEach(v => {
                 const isVerified = v.status === 'VERIFIED';
                 const hasPlate = v.plate_number && v.plate_number.trim() !== '' && !v.plate_number.toUpperCase().includes('N/A') && !v.plate_number.toUpperCase().includes('UNKNOWN');
                 const hasViolator = v.violator_id && v.violators && (!v.violators.middle_name || v.violators.middle_name !== 'Moto');
@@ -268,6 +291,7 @@ const SupabaseDB = {
                 .select();
 
             if (error) throw error;
+            this.invalidateCache();
             return { success: true, violation: data[0] };
         } catch (err) {
             console.error('Error updating status:', err);
