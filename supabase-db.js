@@ -177,7 +177,7 @@ const SupabaseDB = {
             if (!allViolations || (now - this._cache.timestamp > this._cache.ttl) || forceRefresh || search) {
                 let query = this.client
                     .from('violations')
-                    .select('id, violation_class, violation_category, confidence, detection_timestamp, plate_number, plate_confidence, status, location, source_file, annotated_file, evidence_snapshot, plate_crop_file, plate_crop_raw_file, plate_crop_processed_file, violator_id, violators(id, first_name, last_name, middle_name)');
+                    .select('id, violation_class, violation_category, confidence, detection_timestamp, plate_number, plate_confidence, status, location, source_file, annotated_file, evidence_snapshot, plate_crop_file, plate_crop_raw_file, plate_crop_processed_file, violator_id, verification_notes, violators(id, first_name, last_name, middle_name)');
 
                 if (status && status !== 'ALL') {
                     query = query.eq('status', status);
