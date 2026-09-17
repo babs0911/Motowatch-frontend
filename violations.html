@@ -82,8 +82,8 @@
                             <li><hr class="dropdown-divider border-secondary"></li>
                             <li><a class="dropdown-item py-2" href="upload.html"><i class="bi bi-image me-2"></i> Upload Image/Video</a></li>
                             <li class="admin-db-tool d-none"><hr class="dropdown-divider border-secondary"></li>
-                            <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="exportDatabaseJson(event)"><i class="bi bi-download me-2 text-warning"></i> Export Database (JSON)</a></li>
-                            <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="openImportDbModal(event)"><i class="bi bi-upload me-2 text-success"></i> Import Database</a></li>
+                            <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="exportDatabaseSql(event)"><i class="bi bi-download me-2"></i> Export Database</a></li>
+                            <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="openImportDbModal(event)"><i class="bi bi-upload me-2"></i> Import Database</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown px-2 d-none" id="adminSettingsDropdown">
@@ -152,14 +152,20 @@
         <div class="d-flex mb-3">
             <ul class="nav nav-pills" id="violationTabs" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active fw-semibold px-4 py-2 me-2" id="normalTab" onclick="switchTab('normal')" style="border-radius: 10px; font-size: 0.9rem;">
-                        <i class="bi bi-shield-check me-2"></i> Violations
-                        <span class="badge bg-light text-dark ms-2" id="normalCount">0</span>
+                    <button class="nav-link active fw-semibold px-4 py-2 me-2" id="allTab" onclick="switchTab('all')" style="border-radius: 10px; font-size: 0.9rem;">
+                        <i class="bi bi-collection me-2"></i> All Violations
+                        <span class="badge bg-light text-dark ms-2" id="allCount">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold px-4 py-2 me-2" id="verifiedTab" onclick="switchTab('verified')" style="border-radius: 10px; font-size: 0.9rem;">
+                        <i class="bi bi-shield-check me-2"></i> Verified
+                        <span class="badge bg-success ms-2" id="verifiedCount">0</span>
                     </button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link fw-semibold px-4 py-2" id="flaggedTab" onclick="switchTab('flagged')" style="border-radius: 10px; font-size: 0.9rem;">
-                        <i class="bi bi-flag me-2"></i> Flagged Violations
+                        <i class="bi bi-flag me-2"></i> Flagged / Unidentified
                         <span class="badge bg-danger ms-2" id="flaggedCount">0</span>
                     </button>
                 </li>
@@ -232,7 +238,7 @@
     <script src="supabase-db.js"></script>
     <script src="main.js"></script>
     <script>
-        let currentTab = 'normal';
+        let currentTab = 'all';
         let currentPage = 1;
         const perPage = 15;
 
@@ -250,6 +256,24 @@
                 if (settingsDropdown) settingsDropdown.classList.remove('d-none');
             }
 
+            // Read URL query parameters (?status=UNVERIFIED or ?tab=verified or ?q=...)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('status')) {
+                const statusSelect = document.getElementById('status');
+                if (statusSelect) statusSelect.value = urlParams.get('status');
+            }
+            if (urlParams.has('q')) {
+                const qInput = document.getElementById('q');
+                if (qInput) qInput.value = urlParams.get('q');
+            }
+            if (urlParams.has('tab')) {
+                const tabParam = urlParams.get('tab');
+                if (['all', 'verified', 'flagged', 'normal'].includes(tabParam)) {
+                    currentTab = tabParam === 'normal' ? 'all' : tabParam;
+                }
+            }
+
+            updateTabVisuals();
             loadViolations();
         });
 
@@ -269,10 +293,18 @@
 
         function switchTab(tabName) {
             currentTab = tabName;
-            document.getElementById('normalTab').classList.toggle('active', tabName === 'normal');
-            document.getElementById('flaggedTab').classList.toggle('active', tabName === 'flagged');
+            updateTabVisuals();
             currentPage = 1;
             loadViolations();
+        }
+
+        function updateTabVisuals() {
+            const allBtn = document.getElementById('allTab');
+            const verBtn = document.getElementById('verifiedTab');
+            const flgBtn = document.getElementById('flaggedTab');
+            if (allBtn) allBtn.classList.toggle('active', currentTab === 'all');
+            if (verBtn) verBtn.classList.toggle('active', currentTab === 'verified');
+            if (flgBtn) flgBtn.classList.toggle('active', currentTab === 'flagged');
         }
 
         async function loadViolations() {
@@ -300,8 +332,12 @@
                 });
 
                 if (data.success) {
-                    document.getElementById('normalCount').textContent = data.normal_count;
-                    document.getElementById('flaggedCount').textContent = data.flagged_count;
+                    const allBadge = document.getElementById('allCount');
+                    const verBadge = document.getElementById('verifiedCount');
+                    const flgBadge = document.getElementById('flaggedCount');
+                    if (allBadge) allBadge.textContent = data.all_count !== undefined ? data.all_count : data.total;
+                    if (verBadge) verBadge.textContent = data.verified_count || 0;
+                    if (flgBadge) flgBadge.textContent = data.flagged_count || 0;
 
                     tbody.innerHTML = '';
                     if (data.violations.length === 0) {

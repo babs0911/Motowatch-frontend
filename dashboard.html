@@ -62,8 +62,8 @@
                             <li><hr class="dropdown-divider border-secondary"></li>
                             <li><a class="dropdown-item py-2" href="upload.html"><i class="bi bi-image me-2"></i> Upload Image/Video</a></li>
                             <li class="admin-db-tool d-none"><hr class="dropdown-divider border-secondary"></li>
-                            <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="exportDatabaseJson(event)"><i class="bi bi-download me-2 text-warning"></i> Export Database (JSON)</a></li>
-                            <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="openImportDbModal(event)"><i class="bi bi-upload me-2 text-success"></i> Import Database</a></li>
+                            <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="exportDatabaseSql(event)"><i class="bi bi-download me-2"></i> Export Database</a></li>
+                            <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="openImportDbModal(event)"><i class="bi bi-upload me-2"></i> Import Database</a></li>
                         </ul>
                     </li>
                     <li class="nav-item dropdown px-2 d-none" id="adminSettingsDropdown">
@@ -141,11 +141,14 @@
                     <div class="card-body">
                         <h5 class="card-title mb-3 text-white">Quick Actions</h5>
                         <div class="btn-group" role="group">
-                            <a href="violations.html" class="btn btn-outline-warning">
+                            <a href="upload.html" class="btn btn-outline-primary">
+                                <i class="bi bi-image"></i> Upload Image
+                            </a>
+                            <a href="violations.html?status=UNVERIFIED" class="btn btn-outline-warning">
                                 <i class="bi bi-exclamation-triangle"></i> Review Pending
                             </a>
-                            <a href="live-stream.html" class="btn btn-outline-info">
-                                <i class="bi bi-camera-video"></i> View Livestream
+                            <a href="reports.html" class="btn btn-outline-info">
+                                <i class="bi bi-graph-up"></i> View Reports
                             </a>
                         </div>
                     </div>

@@ -203,9 +203,13 @@ const SupabaseDB = {
 
             let normalList = [];
             let flaggedList = [];
+            let verifiedList = [];
 
             allViolations.forEach(v => {
                 const isVerified = v.status === 'VERIFIED';
+                if (isVerified) {
+                    verifiedList.push(v);
+                }
                 const hasPlate = v.plate_number && v.plate_number.trim() !== '' && !v.plate_number.toUpperCase().includes('N/A') && !v.plate_number.toUpperCase().includes('UNKNOWN');
                 const hasViolator = v.violator_id && v.violators && (!v.violators.middle_name || v.violators.middle_name !== 'Moto');
 
@@ -216,10 +220,22 @@ const SupabaseDB = {
                 }
             });
 
-            const normal_count = normalList.length;
+            const all_count = allViolations.length;
+            const verified_count = verifiedList.length;
             const flagged_count = flaggedList.length;
+            const normal_count = normalList.length;
 
-            const targetList = tab === 'flagged' ? flaggedList : normalList;
+            let targetList = allViolations;
+            if (tab === 'flagged') {
+                targetList = flaggedList;
+            } else if (tab === 'verified') {
+                targetList = verifiedList;
+            } else if (tab === 'normal') {
+                targetList = normalList;
+            } else {
+                targetList = allViolations;
+            }
+
             const total = targetList.length;
             const pages = Math.ceil(total / per_page) || 1;
 
@@ -231,15 +247,17 @@ const SupabaseDB = {
                 success: true,
                 violations: pagedViolations,
                 total,
-                normal_count,
+                all_count,
+                verified_count,
                 flagged_count,
+                normal_count,
                 page,
                 per_page,
                 pages
             };
         } catch (err) {
             console.error('Error fetching Supabase violations:', err);
-            return { success: false, error: err.message, violations: [], total: 0, normal_count: 0, flagged_count: 0 };
+            return { success: false, error: err.message, violations: [], total: 0, all_count: 0, verified_count: 0, flagged_count: 0, normal_count: 0 };
         }
     },
 
