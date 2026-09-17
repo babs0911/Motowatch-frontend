@@ -245,6 +245,10 @@
 
             const formData = new FormData();
             formData.append('file', file);
+            const devLoc = sessionStorage.getItem('motowatch_device_location');
+            if (devLoc) {
+                formData.append('location', devLoc);
+            }
 
             const targetWorker = Config.getAiWorkerUrl() || window.backendUrl || '';
             if (!targetWorker) {

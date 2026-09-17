@@ -234,11 +234,9 @@
                                 <label class="text-white-50 small d-block mb-1">Date Detected</label>
                                 <span class="fw-semibold text-white" id="caseTimestampText">--</span>
                             </div>
-                            <div class="col-12 mt-2 d-none" id="trackedVehicleContainer">
-                                <label class="text-white-50 small d-block mb-1">Tracked Vehicle</label>
-                                <span class="badge bg-primary bg-opacity-25 text-info border border-info border-opacity-25 px-3 py-2 fs-6">
-                                    <i class="bi bi-bicycle me-1"></i> <span id="trackedVehicleText">--</span>
-                                </span>
+                            <div class="col-12 mt-2 d-none" id="systemNotesContainer">
+                                <label class="text-white-50 small d-block mb-1">Notes</label>
+                                <span class="text-white-50 small" id="systemNotesText">--</span>
                             </div>
                         </div>
                         <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
@@ -506,9 +504,9 @@
 
                     document.getElementById('caseTimestampText').textContent = new Date(v.detection_timestamp).toLocaleString();
                     
-                    if (v.verification_notes && v.verification_notes.includes('Tracked Vehicle:')) {
-                        document.getElementById('trackedVehicleContainer').classList.remove('d-none');
-                        document.getElementById('trackedVehicleText').textContent = v.verification_notes.replace('Tracked Vehicle: ', '');
+                    if (v.verification_notes) {
+                        document.getElementById('systemNotesContainer').classList.remove('d-none');
+                        document.getElementById('systemNotesText').textContent = v.verification_notes;
                     }
 
                     document.getElementById('detectedPlateText').innerHTML = v.plate_number ? 

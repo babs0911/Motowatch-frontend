@@ -59,6 +59,54 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    // 3. Device Geolocation Service (Accurate Device GPS with Reverse Geocoding)
+    function initDeviceGeolocation() {
+        if (!("geolocation" in navigator)) return;
+        
+        navigator.geolocation.getCurrentPosition(
+            async function(pos) {
+                const lat = pos.coords.latitude;
+                const lon = pos.coords.longitude;
+                sessionStorage.setItem('motowatch_device_lat', lat);
+                sessionStorage.setItem('motowatch_device_lon', lon);
+                
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`);
+                    if (res.ok) {
+                        const data = await res.json();
+                        const addr = data.address || {};
+                        const parts = [];
+                        if (addr.road || addr.suburb || addr.neighbourhood) parts.push(addr.road || addr.suburb || addr.neighbourhood);
+                        if (addr.city || addr.town || addr.municipality) parts.push(addr.city || addr.town || addr.municipality);
+                        if (addr.state || addr.province) parts.push(addr.state || addr.province);
+                        
+                        const locName = parts.length > 0 ? parts.join(', ') : (data.display_name ? data.display_name.split(',').slice(0, 3).join(', ') : `${lat.toFixed(4)}, ${lon.toFixed(4)}`);
+                        sessionStorage.setItem('motowatch_device_location', locName);
+                        
+                        // Sync to backend worker
+                        const targetWorker = (window.Config && Config.getAiWorkerUrl) ? Config.getAiWorkerUrl() : (localStorage.getItem('motowatch_tunnel_url') || '');
+                        if (targetWorker) {
+                            fetch(`${targetWorker}/api/device/location`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ location: locName, latitude: lat, longitude: lon }),
+                                credentials: 'include'
+                            }).catch(() => {});
+                        }
+                    }
+                } catch(e) {
+                    const fallback = `${lat.toFixed(4)}, ${lon.toFixed(4)}`;
+                    sessionStorage.setItem('motowatch_device_location', fallback);
+                }
+            },
+            function(err) {
+                console.log("[Device Geolocation] Status:", err.message);
+            },
+            { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
+        );
+    }
+    initDeviceGeolocation();
+
     setupAdminMenuItems();
     // Also run on next tick in case SupabaseDB initialized slightly after DOMContentLoaded
     setTimeout(setupAdminMenuItems, 300);
