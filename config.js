@@ -51,3 +51,6 @@ const Config = {
         return null;
     }
 };
+
+// Global shorthand for API tunnel
+window.backendUrl = Config.getAiWorkerUrl();

@@ -74,7 +74,8 @@
                             <li><a class="dropdown-item py-2" href="live-stream.html"><i class="bi bi-camera-video me-2"></i> Livestream</a></li>
                             <li><a class="dropdown-item py-2" href="ocr-test.html"><i class="bi bi-cpu me-2"></i> OCR Test</a></li>
                             <li><hr class="dropdown-divider border-secondary"></li>
-                            <li><a class="dropdown-item py-2 active text-white" href="upload.html"><i class="bi bi-image me-2"></i> Upload Image/Video</a></li>
+                            <li><a class="dropdown-item py-2 active text-white" href="upload.html"><i class="bi bi-image me-2"></i> Upload Image</a></li>
+                            <li><a class="dropdown-item py-2" href="upload-video.html"><i class="bi bi-film me-2"></i> Upload Video</a></li>
                             <li class="admin-db-tool d-none"><hr class="dropdown-divider border-secondary"></li>
                             <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="exportDatabaseSql(event)"><i class="bi bi-download me-2"></i> Export Database</a></li>
                             <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="openImportDbModal(event)"><i class="bi bi-upload me-2"></i> Import Database</a></li>
@@ -245,8 +246,16 @@
             const formData = new FormData();
             formData.append('file', file);
 
+            const targetWorker = Config.getAiWorkerUrl() || window.backendUrl || '';
+            if (!targetWorker) {
+                alert('AI Worker tunnel is not configured. Please ensure your local Flask server or Cloudflare tunnel is active.');
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = type === 'image' ? '<i class="bi bi-cpu"></i> Analyze Image' : '<i class="bi bi-cpu"></i> Analyze Video';
+                return;
+            }
+
             try {
-                const res = await fetch(`${backendUrl}/upload/api/${type}`, {
+                const res = await fetch(`${targetWorker}/upload/api/${type}`, {
                     method: 'POST',
                     body: formData,
                     mode: 'cors',
@@ -261,7 +270,11 @@
                     
                     const resultImg = document.getElementById('modalResultImg');
                     if (data.annotated_path) {
-                        resultImg.src = `${backendUrl}/violation-data/${data.annotated_path}`;
+                        let imgUrl = data.annotated_path;
+                        if (!imgUrl.startsWith('http')) {
+                            imgUrl = `${targetWorker}/violation-data/${data.annotated_path}`;
+                        }
+                        resultImg.src = imgUrl;
                         resultImg.classList.remove('d-none');
                     } else {
                         resultImg.classList.add('d-none');
@@ -289,12 +302,14 @@
 
         async function handleLogout() {
             try {
-                await fetch(`${backendUrl}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
+                const targetWorker = Config.getAiWorkerUrl() || window.backendUrl || '';
+                if (targetWorker) {
+                    await fetch(`${targetWorker}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
+                }
             } catch (err) {
                 console.error(err);
             }
-            localStorage.removeItem('user_name');
-            localStorage.removeItem('user_role');
+            SupabaseDB.logout();
             window.location.href = 'login.html';
         }
     </script>

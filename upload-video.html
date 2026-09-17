@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Video - MotoWatch</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .upload-area {
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 48px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s, transform 0.1s;
+        }
+        .upload-area:hover {
+            border-color: #06b6d4;
+            background-color: rgba(6, 182, 212, 0.05);
+            transform: translateY(-2px);
+        }
+    </style>
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <div class="screen-overlay"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg border-bottom" style="background: rgba(13, 27, 42, 0.95); backdrop-filter: blur(10px); border-color: rgba(255,255,255,0.05) !important;">
+        <div class="container-fluid px-4 px-lg-5">
+            <a class="navbar-brand fw-bold d-flex align-items-center" href="portal.html" style="font-family: 'Montserrat', sans-serif; letter-spacing: 1px; color: #ffffff;">
+                <img src="img/logo.png" alt="Logo" style="height: 45px; margin-right: 15px;"> MOTOWATCH
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" style="border-color: rgba(255,255,255,0.1);">
+                <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link px-3 text-white-50" href="portal.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-house-door"></i> Home
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 text-white-50" href="dashboard.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-speedometer2"></i> Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 text-white-50" href="violations.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-exclamation-triangle"></i> Violations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 text-white-50" href="reports.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-graph-up"></i> Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link px-3 text-white-50" href="alerts.html" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-bell"></i> Notifications
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown px-2">
+                        <a class="nav-link dropdown-toggle active text-white fw-bold" href="#" role="button" data-bs-toggle="dropdown" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-tools"></i> Tools
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark border-secondary shadow-lg">
+                            <li><a class="dropdown-item py-2" href="live-stream.html"><i class="bi bi-camera-video me-2"></i> Livestream</a></li>
+                            <li><a class="dropdown-item py-2" href="ocr-test.html"><i class="bi bi-cpu me-2"></i> OCR Test</a></li>
+                            <li><hr class="dropdown-divider border-secondary"></li>
+                            <li><a class="dropdown-item py-2" href="upload.html"><i class="bi bi-image me-2"></i> Upload Image</a></li>
+                            <li><a class="dropdown-item py-2 active text-white" href="upload-video.html"><i class="bi bi-film me-2"></i> Upload Video</a></li>
+                            <li class="admin-db-tool d-none"><hr class="dropdown-divider border-secondary"></li>
+                            <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="exportDatabaseSql(event)"><i class="bi bi-download me-2"></i> Export Database</a></li>
+                            <li class="admin-db-tool d-none"><a class="dropdown-item py-2" href="#" onclick="openImportDbModal(event)"><i class="bi bi-upload me-2"></i> Import Database</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown px-2 d-none" id="adminSettingsDropdown">
+                        <a class="nav-link dropdown-toggle text-white-50" href="#" role="button" data-bs-toggle="dropdown" style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="bi bi-gear-fill"></i> Settings
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-dark border-secondary shadow-lg">
+                            <li><a class="dropdown-item py-2" href="users.html"><i class="bi bi-people me-2"></i> User Management</a></li>
+                            <li><a class="dropdown-item py-2" href="system-logs.html"><i class="bi bi-list-columns-reverse me-2"></i> System Logs</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle text-white fw-bold" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-person-circle me-1"></i> <span id="usernameDisplay">USER</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark border-secondary shadow-lg">
+                            <li><a class="dropdown-item text-danger py-2" href="#" onclick="handleLogout()">
+                                <i class="bi bi-box-arrow-right me-2"></i> LOGOUT
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container my-4 flex-grow-1" style="position: relative;">
+        <h1 class="mb-4" style="font-family: 'Montserrat', sans-serif; font-weight: 800; letter-spacing: 1px;">
+            <i class="bi bi-film text-info me-2"></i> Upload Video
+        </h1>
+
+        <div class="row g-4">
+            <!-- Video Upload Card -->
+            <div class="col-lg-8">
+                <div class="card h-100 border-0" style="background: rgba(13, 27, 42, 0.8); backdrop-filter: blur(15px); border: 1px solid rgba(255,255,255,0.08) !important;">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4">
+                        <h5 class="fw-bold text-white mb-0"><i class="bi bi-camera-reels me-2 text-info"></i> Video File Analysis</h5>
+                        <p class="text-white-50 small mt-1 mb-0">Upload pre-recorded footage to detect helmet violations with multi-frame burst plate consensus.</p>
+                    </div>
+                    <div class="card-body p-4 text-center">
+                        <div class="upload-area mb-4" onclick="triggerVideoInput()">
+                            <i class="bi bi-cloud-arrow-up fs-1 text-info mb-2 d-block"></i>
+                            <span class="fw-bold fs-5 d-block text-white">Select or Drag Video File</span>
+                            <span class="text-white-50 d-block small mt-1" id="videoFileName">Supported: MP4, AVI, MOV (Max 100MB)</span>
+                        </div>
+                        
+                        <input type="file" id="videoInput" accept=".mp4,.avi,.mov" class="d-none" onchange="videoFileSelected()">
+                        
+                        <button class="btn btn-info btn-lg text-white w-100 py-3 fw-bold" id="videoSubmitBtn" onclick="uploadVideoFile()" disabled>
+                            <i class="bi bi-cpu me-2"></i> Upload and Analyze Video
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- How It Works Sidebar -->
+            <div class="col-lg-4">
+                <div class="card h-100 border-0" style="background: rgba(6, 182, 212, 0.08) !important; border: 1px solid rgba(6, 182, 212, 0.2) !important;">
+                    <div class="card-body p-4">
+                        <h5 class="card-title text-info mb-3 fw-bold">
+                            <i class="bi bi-info-circle me-2"></i> How It Works
+                        </h5>
+                        <ol class="text-white-50 small ps-3 mb-4" style="line-height: 1.8;">
+                            <li class="mb-2">Upload a recorded traffic video (MP4/AVI/MOV).</li>
+                            <li class="mb-2">Frames are sampled at intervals matching the livestream detection stride.</li>
+                            <li class="mb-2">Riders & motorcycles are paired to identify helmet violations.</li>
+                            <li class="mb-2">Multi-frame burst consensus extracts sharp license plate crops.</li>
+                            <li class="mb-2">Focused motorcycle ROI evidence snapshots and reports are committed to database.</li>
+                        </ol>
+                        
+                        <hr style="border-color: rgba(255,255,255,0.1);">
+                        
+                        <h6 class="text-white small text-uppercase fw-bold mb-3">Helmet Classes:</h6>
+                        <ul class="text-white-50 small list-unstyled">
+                            <li class="mb-2"><span class="badge bg-success me-2">Compliant</span> Proper helmet (no violation)</li>
+                            <li class="mb-2"><span class="badge bg-warning text-dark me-2">Non-Compliant</span> No helmet or improper nutshell (violation)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer mt-auto py-4" style="background: rgba(13, 27, 42, 0.95); border-top: 1px solid rgba(255,255,255,0.05);">
+        <div class="container text-center">
+            <span style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">
+                <i class="bi bi-info-circle me-1"></i>
+                <strong>Note:</strong> MotoWatch is for monitoring and violation detection — not primary enforcement.
+            </span>
+        </div>
+    </footer>
+
+    <!-- Result Modal -->
+    <div class="modal fade" id="resultModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content border-0" style="background: rgba(13, 27, 42, 0.96); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.15) !important;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold text-white" id="modalTitle">
+                        <i class="bi bi-check-circle text-success me-2"></i> Analysis Results
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert border-0 mb-4" id="modalAlertBox" style="background: rgba(6, 182, 212, 0.15); color: #22d3ee;">
+                        <i class="bi bi-info-circle me-2" id="modalAlertIcon"></i>
+                        <span id="modalMessage">Processing completed.</span>
+                    </div>
+
+                    <!-- Video Preview Player -->
+                    <div class="mb-4 text-center bg-black rounded p-2" id="videoPreviewContainer" style="display: none;">
+                        <h6 class="text-white-50 small text-uppercase text-start mb-2"><i class="bi bi-film me-1"></i> Annotated Detection Video:</h6>
+                        <video id="modalResultVideo" controls class="w-100 rounded" style="max-height: 55vh; background: #000;">
+                            Your browser does not support the video tag.
+                        </video>
+                    </div>
+
+                    <!-- Violations Breakdown -->
+                    <div class="row g-3" id="violationDetailsSection" style="display: none;">
+                        <div class="col-md-6">
+                            <h6 class="text-white-50 small text-uppercase mb-2">Detected Violations:</h6>
+                            <div class="p-3 rounded" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);">
+                                <div class="mb-2">
+                                    <strong class="text-white">Violator Count:</strong> 
+                                    <span class="badge bg-danger fs-6 ms-2" id="modalViolationCount">0</span>
+                                </div>
+                                <div class="mt-2">
+                                    <strong class="text-white d-block mb-1">Generated Violation Records:</strong>
+                                    <div class="d-flex flex-wrap gap-2" id="modalReportLinks"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <h6 class="text-white-50 small text-uppercase mb-2">Extracted License Plate Crops:</h6>
+                            <div class="p-3 rounded d-flex flex-wrap gap-2 align-items-center" id="modalPlateCrops" style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); min-height: 90px;">
+                                <span class="text-white-50 small">No plate crops detected.</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <a href="violations.html" class="btn btn-primary" id="modalViewLogsBtn">
+                        <i class="bi bi-list-ul me-1"></i> View All Violations
+                    </a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="config.js"></script>
+    <script src="supabase-db.js"></script>
+    <script src="main.js"></script>
+    <script>
+        const resultModal = new bootstrap.Modal(document.getElementById('resultModal'));
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (!SupabaseDB.isLoggedIn()) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const currentUser = SupabaseDB.getCurrentUser();
+            document.getElementById('usernameDisplay').textContent = currentUser.username.toUpperCase();
+            
+            if (currentUser.role === 'Admin') {
+                const settingsDropdown = document.getElementById('adminSettingsDropdown');
+                if (settingsDropdown) settingsDropdown.classList.remove('d-none');
+            }
+        });
+
+        function triggerVideoInput() {
+            document.getElementById('videoInput').click();
+        }
+
+        function videoFileSelected() {
+            const input = document.getElementById('videoInput');
+            const fileNameSpan = document.getElementById('videoFileName');
+            const submitBtn = document.getElementById('videoSubmitBtn');
+            
+            if (input.files.length > 0) {
+                const f = input.files[0];
+                const sizeMb = (f.size / (1024 * 1024)).toFixed(1);
+                fileNameSpan.textContent = `${f.name} (${sizeMb} MB)`;
+                submitBtn.disabled = false;
+            } else {
+                fileNameSpan.textContent = 'Supported: MP4, AVI, MOV (Max 100MB)';
+                submitBtn.disabled = true;
+            }
+        }
+
+        async function uploadVideoFile() {
+            const input = document.getElementById('videoInput');
+            const submitBtn = document.getElementById('videoSubmitBtn');
+            const file = input.files[0];
+            
+            if (!file) return;
+
+            const targetWorker = Config.getAiWorkerUrl() || window.backendUrl || '';
+            if (!targetWorker) {
+                alert('AI Worker tunnel is not configured. Please ensure your local Flask server or Cloudflare tunnel is active.');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Processing Video (Inference & Consensus)...';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const res = await fetch(`${targetWorker}/upload/api/video`, {
+                    method: 'POST',
+                    body: formData,
+                    mode: 'cors',
+                    credentials: 'include'
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    const hasV = data.has_violation;
+                    const alertBox = document.getElementById('modalAlertBox');
+                    const alertIcon = document.getElementById('modalAlertIcon');
+                    const titleElem = document.getElementById('modalTitle');
+                    
+                    if (hasV) {
+                        titleElem.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-warning me-2"></i> Violation(s) Detected';
+                        alertBox.style.background = 'rgba(180, 83, 9, 0.2)';
+                        alertBox.style.color = '#fbbf24';
+                        alertIcon.className = 'bi bi-exclamation-circle me-2';
+                    } else {
+                        titleElem.innerHTML = '<i class="bi bi-check-circle-fill text-success me-2"></i> Video Analysis Complete';
+                        alertBox.style.background = 'rgba(21, 128, 61, 0.2)';
+                        alertBox.style.color = '#4ade80';
+                        alertIcon.className = 'bi bi-check-circle me-2';
+                    }
+                    
+                    document.getElementById('modalMessage').textContent = data.message;
+                    
+                    // Video player
+                    const vContainer = document.getElementById('videoPreviewContainer');
+                    const vElem = document.getElementById('modalResultVideo');
+                    if (data.annotated_path) {
+                        let videoUrl = data.annotated_path;
+                        if (!videoUrl.startsWith('http')) {
+                            // Extract subfolder and filename
+                            const cleanPath = data.annotated_path.replace(/\\/g, '/');
+                            const parts = cleanPath.split('/');
+                            const filename = parts[parts.length - 1];
+                            const subfolder = parts.length > 1 ? parts[parts.length - 2] : 'annotated';
+                            videoUrl = `${targetWorker}/violation-data/${subfolder}/${filename}`;
+                        }
+                        vElem.src = videoUrl;
+                        vContainer.style.display = 'block';
+                    } else {
+                        vContainer.style.display = 'none';
+                    }
+
+                    // Violations Breakdown
+                    const vDetailsSection = document.getElementById('violationDetailsSection');
+                    if (hasV) {
+                        vDetailsSection.style.display = 'flex';
+                        const count = data.violation_count || (data.violation_ids ? data.violation_ids.length : 1);
+                        document.getElementById('modalViolationCount').textContent = count;
+                        
+                        const linksContainer = document.getElementById('modalReportLinks');
+                        linksContainer.innerHTML = '';
+                        const vids = data.violation_ids || (data.violation_id ? [data.violation_id] : []);
+                        vids.forEach(vid => {
+                            const badge = document.createElement('a');
+                            badge.href = `violation-detail.html?id=${vid}`;
+                            badge.className = 'badge bg-primary text-decoration-none py-2 px-3 fs-6';
+                            badge.innerHTML = `<i class="bi bi-file-earmark-text me-1"></i>Report #${vid}`;
+                            linksContainer.appendChild(badge);
+                        });
+
+                        // Plate crops
+                        const cropsContainer = document.getElementById('modalPlateCrops');
+                        cropsContainer.innerHTML = '';
+                        const platePaths = data.plate_crop_paths || (data.plate_crop_path ? [data.plate_crop_path] : []);
+                        if (platePaths.length > 0) {
+                            platePaths.forEach(p => {
+                                if (!p) return;
+                                let cropUrl = p;
+                                if (!cropUrl.startsWith('http')) {
+                                    const cleanP = p.replace(/\\/g, '/');
+                                    const parts = cleanP.split('/');
+                                    const fname = parts[parts.length - 1];
+                                    cropUrl = `${targetWorker}/violation-data/plates/raw/${fname}`;
+                                }
+                                const img = document.createElement('img');
+                                img.src = cropUrl;
+                                img.className = 'img-fluid rounded border border-secondary shadow-sm';
+                                img.style.maxHeight = '90px';
+                                img.alt = 'Plate Crop';
+                                cropsContainer.appendChild(img);
+                            });
+                        } else {
+                            cropsContainer.innerHTML = '<span class="text-white-50 small">No license plates extracted.</span>';
+                        }
+                    } else {
+                        vDetailsSection.style.display = 'none';
+                    }
+
+                    resultModal.show();
+                } else {
+                    alert(`Error processing video: ${data.message || 'Unknown error'}`);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('An error occurred during video upload. Please check that your AI tunnel is active.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="bi bi-cpu me-2"></i> Upload and Analyze Video';
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                const targetWorker = Config.getAiWorkerUrl() || window.backendUrl || '';
+                if (targetWorker) {
+                    await fetch(`${targetWorker}/auth/api/logout`, { method: 'POST', mode: 'cors', credentials: 'include' });
+                }
+            } catch (err) {
+                console.error(err);
+            }
+            SupabaseDB.logout();
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>
