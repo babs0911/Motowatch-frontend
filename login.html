@@ -174,6 +174,10 @@
                 </form>
             </div>
         </div>
+
+        <div class="text-center mt-4">
+            <span id="backendUrlText" class="text-primary small fw-semibold"></span>
+        </div>
     </div>
 
     <!-- Configuration Modal -->
@@ -216,14 +220,8 @@
                 window.location.href = 'portal.html';
             }
             const aiUrl = Config.getAiWorkerUrl();
-            const backendUrlText = document.getElementById('backendUrlText');
-            if (backendUrlText) {
-                backendUrlText.textContent = aiUrl ? `AI Tunnel: ${aiUrl}` : 'Cloud DB: Supabase (Active)';
-            }
-            const backendUrlInput = document.getElementById('backendUrlInput');
-            if (backendUrlInput) {
-                backendUrlInput.value = aiUrl;
-            }
+            document.getElementById('backendUrlText').textContent = aiUrl ? `AI Tunnel: ${aiUrl}` : 'Cloud DB: Supabase (Active)';
+            document.getElementById('backendUrlInput').value = aiUrl;
         });
 
         // Toggle configuration modal
@@ -235,48 +233,45 @@
         function saveBackendUrl() {
             const inputVal = document.getElementById('backendUrlInput').value;
             Config.setAiWorkerUrl(inputVal);
-            const backendUrlText = document.getElementById('backendUrlText');
-            if (backendUrlText) {
-                backendUrlText.textContent = inputVal ? `AI Tunnel: ${inputVal}` : 'Cloud DB: Supabase (Active)';
-            }
+            document.getElementById('backendUrlText').textContent = inputVal ? `AI Tunnel: ${inputVal}` : 'Cloud DB: Supabase (Active)';
             configModal.hide();
         }
 
-            // Form submission (100% Direct Cloud Auth)
-            document.getElementById('loginForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const alertBox = document.getElementById('alertBox');
-                const submitBtn = document.getElementById('submitBtn');
-                const btnText = document.getElementById('btnText');
-                const btnSpinner = document.getElementById('btnSpinner');
+        // Form submission (100% Direct Cloud Auth)
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const alertBox = document.getElementById('alertBox');
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnSpinner = document.getElementById('btnSpinner');
 
-                alertBox.classList.add('d-none');
-                submitBtn.disabled = true;
-                btnText.classList.add('d-none');
-                btnSpinner.classList.remove('d-none');
+            alertBox.classList.add('d-none');
+            submitBtn.disabled = true;
+            btnText.classList.add('d-none');
+            btnSpinner.classList.remove('d-none');
 
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
 
-                try {
-                    const result = await SupabaseDB.login(username, password);
-                    if (result.success) {
-                        window.location.href = 'portal.html';
-                    } else {
-                        alertBox.textContent = result.error || 'Invalid credentials';
-                        alertBox.classList.remove('d-none');
-                    }
-                } catch (err) {
-                    console.error(err);
-                    alertBox.textContent = 'Login failed. Please verify your username and password.';
+            try {
+                const result = await SupabaseDB.login(username, password);
+                if (result.success) {
+                    window.location.href = 'portal.html';
+                } else {
+                    alertBox.textContent = result.error || 'Invalid credentials';
                     alertBox.classList.remove('d-none');
-                } finally {
-                    submitBtn.disabled = false;
-                    btnText.classList.remove('d-none');
-                    btnSpinner.classList.add('d-none');
                 }
-            });
-        </script>
+            } catch (err) {
+                console.error(err);
+                alertBox.textContent = 'Login failed. Please verify your username and password.';
+                alertBox.classList.remove('d-none');
+            } finally {
+                submitBtn.disabled = false;
+                btnText.classList.remove('d-none');
+                btnSpinner.classList.add('d-none');
+            }
+        });
+    </script>
 </body>
 
 </html>
